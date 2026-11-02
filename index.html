@@ -1,0 +1,1609 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Taller Blockchain</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Schibsted+Grotesk:wght@400;500;600;700;800&display=swap">
+<style>
+/* Layout: la cadena que construyen los estudiantes a la izquierda, panel de progreso fijo a la derecha; en móvil el panel va primero */
+:root {
+  --paper: #EDF0F5;
+  --sheet: #FBFCFE;
+  --ink: #172031;
+  --ink-soft: #586377;
+  --rule: #D3D9E3;
+  --hash-bg: #EEF1F7;
+  --accent: #2747B8;
+  --accent-soft: #E2E7FA;
+  --on-accent: #FFFFFF;
+  --ok: #1B7448;
+  --ok-bg: #DEF1E6;
+  --warn: #8E5300;
+  --warn-bg: #FAEDD5;
+  --bad: #B42318;
+  --bad-bg: #FBE3E0;
+  --scrim: rgba(16, 22, 34, 0.55);
+  --font-display: "Schibsted Grotesk", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Schibsted Grotesk", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #0F131B; --sheet: #161C27; --ink: #E6EAF1; --ink-soft: #9CA6B7; --rule: #2A3243; --hash-bg: #1D2432;
+    --accent: #93A9FF; --accent-soft: #212B4A; --on-accent: #0C1224;
+    --ok: #62C995; --ok-bg: #13301F; --warn: #EFB45E; --warn-bg: #33270F; --bad: #FF8E84; --bad-bg: #3B1815; --scrim: rgba(0, 0, 0, 0.65);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #0F131B; --sheet: #161C27; --ink: #E6EAF1; --ink-soft: #9CA6B7; --rule: #2A3243; --hash-bg: #1D2432;
+  --accent: #93A9FF; --accent-soft: #212B4A; --on-accent: #0C1224;
+  --ok: #62C995; --ok-bg: #13301F; --warn: #EFB45E; --warn-bg: #33270F; --bad: #FF8E84; --bad-bg: #3B1815; --scrim: rgba(0, 0, 0, 0.65);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+[hidden] { display: none !important; }
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 32px 56px;
+}
+.wrap { max-width: 1120px; margin: 0 auto; display: grid; gap: 28px; }
+
+.intro { display: grid; gap: 10px; max-width: 72ch; }
+.eyebrow { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); font-weight: 600; }
+h1 { font-family: var(--font-display); font-weight: 800; font-size: clamp(2rem, 5vw, 3rem); line-height: 1.05; letter-spacing: -0.02em; margin: 0; text-wrap: balance; }
+.intro p { margin: 0; color: var(--ink-soft); font-size: 1.05rem; }
+.formula {
+  font-family: var(--font-mono); font-size: 13px; color: var(--ink); background: var(--sheet);
+  border: 1px solid var(--rule); border-radius: 6px; padding: 8px 12px; justify-self: start; max-width: 100%;
+  overflow-x: auto; white-space: nowrap;
+}
+
+.layout { display: grid; gap: 28px; grid-template-columns: minmax(0, 1fr) 330px; align-items: start; }
+.main { display: grid; gap: 32px; min-width: 0; }
+.side { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 16px); min-width: 0; }
+@media (max-width: 900px) {
+  .layout { grid-template-columns: minmax(0, 1fr); }
+  .side { position: static; order: -1; }
+}
+
+h2 { font-family: var(--font-display); font-weight: 700; font-size: 1.35rem; margin: 0; letter-spacing: -0.01em; text-wrap: balance; }
+.section-head { display: grid; gap: 4px; margin-bottom: 14px; }
+.section-head p { margin: 0; color: var(--ink-soft); max-width: 65ch; }
+
+.label {
+  font-family: var(--font-mono); font-size: 11.5px; letter-spacing: 0.07em; text-transform: uppercase;
+  color: var(--ink-soft); font-weight: 500; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+}
+.hash {
+  display: block; font-family: var(--font-mono); font-size: 13px; line-height: 1.55; word-break: break-all;
+  background: var(--hash-bg); border-radius: 4px; padding: 7px 10px; color: var(--ink);
+}
+.hash.mismatch { background: var(--bad-bg); color: var(--bad); }
+.tag { font-size: 11px; border-radius: 3px; padding: 1px 6px; letter-spacing: 0.04em; }
+.tag.bad { background: var(--bad-bg); color: var(--bad); }
+.tag.good { background: var(--ok-bg); color: var(--ok); }
+
+/* Bloques */
+.chain { display: grid; }
+.block {
+  background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; padding: 18px 20px;
+  display: grid; gap: 14px; transition: border-color .2s ease, box-shadow .2s ease; min-width: 0;
+}
+.block[data-state="draft"] { border: 1.5px solid var(--accent); }
+.block[data-state="alt"] { border-color: var(--bad); box-shadow: 0 0 0 1px var(--bad) inset; }
+.block[data-state="inv"] { border-color: var(--bad); border-style: dashed; }
+.block-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.block-id { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.block-id .num { font-family: var(--font-display); font-weight: 800; font-size: 1.4rem; letter-spacing: -0.02em; line-height: 1; margin: 0; }
+.block-id .kind { font-size: 14px; color: var(--ink-soft); }
+.pill { font-family: var(--font-mono); font-size: 12px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; border-radius: 999px; padding: 3px 10px; white-space: nowrap; }
+.block[data-state="sealed"] .pill, .block[data-state="ok"] .pill { background: var(--ok-bg); color: var(--ok); }
+.block[data-state="draft"] .pill { background: var(--accent-soft); color: var(--accent); }
+.block[data-state="alt"] .pill, .block[data-state="inv"] .pill { background: var(--bad-bg); color: var(--bad); }
+.stamp { margin: 0; font-size: 14px; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+.stamp strong { color: var(--ink); font-weight: 600; }
+.hint { margin: 0; font-size: 14.5px; color: var(--ink-soft); }
+
+.field { display: grid; gap: 6px; min-width: 0; }
+.ops { display: grid; gap: 8px; }
+.op-ro {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; align-items: baseline;
+  background: var(--hash-bg); border-radius: 4px; padding: 8px 12px; font-size: 15px;
+}
+.op-n { font-family: var(--font-mono); font-size: 12px; color: var(--ink-soft); }
+.op-who { min-width: 0; overflow-wrap: anywhere; }
+.arrow { color: var(--ink-soft); }
+.op-amt { font-family: var(--font-mono); font-size: 14px; font-weight: 500; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+fieldset.op-edit {
+  border: 1px solid var(--rule); border-radius: 6px; margin: 0; padding: 8px 12px 12px;
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 8rem); gap: 8px; min-width: 0;
+}
+fieldset.op-edit legend { font-family: var(--font-mono); font-size: 11.5px; letter-spacing: 0.07em; text-transform: uppercase; color: var(--ink-soft); padding: 0 4px; }
+.f { display: grid; gap: 4px; min-width: 0; }
+@media (max-width: 520px) {
+  fieldset.op-edit { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .f-monto { grid-column: 1 / -1; }
+}
+.inp {
+  width: 100%; font: inherit; font-size: 15px; color: var(--ink); background: var(--paper);
+  border: 1px solid var(--rule); border-radius: 6px; padding: 8px 10px; min-width: 0;
+}
+.inp.edited { border-color: var(--warn); background: var(--warn-bg); color: var(--ink); }
+.inp::placeholder { color: var(--ink-soft); opacity: 0.7; }
+
+.draft-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; }
+.draft-msg { margin: 0; font-size: 14px; color: var(--ink-soft); flex: 1 1 240px; }
+.draft-msg.ready { color: var(--ok); }
+.btns { display: flex; gap: 8px; flex-wrap: wrap; }
+.btn {
+  font: inherit; font-weight: 600; font-size: 14.5px; border-radius: 6px; padding: 8px 14px; cursor: pointer;
+  background: var(--accent); color: var(--on-accent); border: 1px solid var(--accent); white-space: nowrap;
+}
+.btn:hover:not(:disabled) { filter: brightness(1.08); }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn.ghost { background: transparent; color: var(--accent); }
+.btn.danger { background: var(--bad); border-color: var(--bad); color: var(--sheet); }
+.btn.wide { width: 100%; }
+
+details { font-size: 14px; color: var(--ink-soft); }
+summary { cursor: pointer; width: fit-content; }
+details .hash { margin-top: 8px; font-size: 12px; white-space: pre-wrap; }
+
+/* Eslabones */
+.link { display: grid; grid-template-columns: 40px minmax(0, 1fr); align-items: center; gap: 10px; padding: 6px 0 6px 20px; position: relative; }
+.link::before { content: ""; position: absolute; left: 39px; top: 0; bottom: 0; width: 2px; background: var(--ok); }
+.link.broken::before { background: repeating-linear-gradient(var(--bad) 0 5px, transparent 5px 10px); }
+.link.next::before { background: repeating-linear-gradient(var(--accent) 0 5px, transparent 5px 10px); }
+.link.idle { min-height: 22px; padding: 0; }
+.link.idle::before { background: var(--rule); }
+.link .knot {
+  position: relative; z-index: 1; width: 40px; height: 28px; border-radius: 14px; display: grid; place-items: center;
+  background: var(--ok-bg); color: var(--ok); border: 2px solid var(--ok); font-weight: 700; font-size: 14px;
+}
+.link.broken .knot { background: var(--bad-bg); color: var(--bad); border-color: var(--bad); }
+.link.next .knot { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
+.link p { margin: 0; font-size: 14px; color: var(--ink-soft); padding-block: 8px; }
+.link p code { font-family: var(--font-mono); font-size: 12.5px; color: var(--ink); }
+.link.broken p, .link.broken p code { color: var(--bad); }
+.pending {
+  border: 1.5px dashed var(--rule); border-radius: 8px; padding: 14px 20px; display: flex; justify-content: space-between;
+  align-items: center; gap: 12px; color: var(--ink-soft); font-size: 14px;
+}
+.pending .num-sm { font-family: var(--font-display); font-weight: 700; font-size: 1.05rem; color: var(--ink-soft); }
+
+/* Panel */
+.panel { background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; padding: 20px; display: grid; gap: 16px; }
+.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.steps li { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 10px; align-items: center; }
+.steps .dot {
+  width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font-family: var(--font-mono);
+  font-weight: 600; font-size: 13px; border: 1.5px solid var(--rule); color: var(--ink-soft);
+}
+.steps .st-title { font-weight: 600; font-size: 15px; line-height: 1.2; }
+.steps .st-sub { display: block; font-size: 13px; color: var(--ink-soft); font-weight: 400; font-variant-numeric: tabular-nums; }
+.steps li[data-state="active"] .dot { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.steps li[data-state="done"] .dot { background: var(--ok-bg); border-color: var(--ok); color: var(--ok); }
+.steps li[data-state="ready"] .dot { border-color: var(--accent); color: var(--accent); }
+.steps li[data-state="todo"] .st-title { color: var(--ink-soft); }
+
+.mm { display: grid; grid-template-columns: 1fr 14px 1fr 14px 1fr 14px 1fr; align-items: center; }
+.mm-node {
+  aspect-ratio: 1; max-width: 100%; border-radius: 6px; display: grid; place-items: center; align-content: center; gap: 0;
+  border: 1.5px dashed var(--rule); color: var(--ink-soft); background: transparent;
+}
+.mm-num { font-family: var(--font-display); font-weight: 800; font-size: 15px; line-height: 1.1; }
+.mm-sym { font-size: 13px; line-height: 1.1; min-height: 1.1em; }
+.mm-node[data-state="draft"] { border: 1.5px solid var(--accent); color: var(--accent); background: var(--accent-soft); }
+.mm-node[data-state="sealed"], .mm-node[data-state="ok"] { border: 1.5px solid var(--ok); color: var(--ok); background: var(--ok-bg); }
+.mm-node[data-state="alt"] { border: 1.5px solid var(--bad); color: var(--sheet); background: var(--bad); }
+.mm-node[data-state="inv"] { border: 1.5px dashed var(--bad); color: var(--bad); background: repeating-linear-gradient(135deg, var(--bad-bg) 0 6px, transparent 6px 10px); }
+.mm-line { height: 2px; background: var(--rule); }
+.mm-line[data-state="ok"] { background: var(--ok); }
+.mm-line[data-state="broken"] { background: repeating-linear-gradient(90deg, var(--bad) 0 4px, transparent 4px 7px); }
+
+.status-word { font-family: var(--font-display); font-weight: 800; font-size: 1.55rem; line-height: 1.1; letter-spacing: -0.02em; margin: 0; text-wrap: balance; }
+.panel[data-state="ok"] .status-word { color: var(--ok); }
+.panel[data-state="bad"] .status-word { color: var(--bad); }
+.status-text { margin: 0; font-size: 15px; }
+.changes { border-top: 1px solid var(--rule); padding-top: 14px; display: grid; gap: 8px; }
+.changes ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+.changes li { font-size: 14px; background: var(--warn-bg); color: var(--ink); border-radius: 4px; padding: 6px 10px; overflow-wrap: anywhere; }
+.changes li b { font-weight: 600; }
+.changes .from { text-decoration: line-through; color: var(--ink-soft); }
+.actions { display: grid; gap: 8px; }
+.store-note { margin: 0; font-size: 12.5px; color: var(--ink-soft); }
+
+.howto { background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; padding: 20px; display: grid; gap: 12px; }
+.howto ol { margin: 0; padding-left: 1.3em; display: grid; gap: 8px; max-width: 65ch; }
+.howto .note { margin: 0; font-size: 14px; color: var(--ink-soft); max-width: 70ch; }
+
+.inp.unsaved { border-color: var(--accent); border-style: dashed; background: var(--accent-soft); color: var(--ink); }
+.commit { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; border-top: 1px solid var(--rule); padding-top: 12px; }
+.commit-msg { margin: 0; font-size: 14px; color: var(--ink-soft); flex: 1 1 220px; }
+.commit.has .commit-msg { color: var(--accent); font-weight: 500; }
+.pending-note { margin: 0; font-size: 14px; background: var(--accent-soft); color: var(--accent); border-radius: 6px; padding: 8px 10px; }
+
+/* Informes */
+.reports { display: grid; gap: 16px; }
+.empty { margin: 0; padding: 16px; border: 1.5px dashed var(--rule); border-radius: 8px; color: var(--ink-soft); font-size: 14.5px; }
+.report { background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; padding: 20px; display: grid; gap: 16px; min-width: 0; transition: box-shadow .4s ease, border-color .4s ease; scroll-margin-top: 16px; }
+.report:focus { outline: none; }
+.report.fresh { border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); }
+.report-head { display: grid; gap: 4px; border-bottom: 1px solid var(--rule); padding-bottom: 12px; }
+.report h3 { font-family: var(--font-display); font-weight: 800; font-size: 1.3rem; margin: 0; letter-spacing: -0.01em; }
+.report-meta { margin: 0; font-size: 14px; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+.report-meta strong { color: var(--ink); font-weight: 600; }
+.report section { display: grid; gap: 8px; min-width: 0; }
+.report h4 { margin: 0; font-size: 15px; font-weight: 700; }
+.report-text { margin: 0; font-size: 15px; }
+.table-wrap { overflow-x: auto; border: 1px solid var(--rule); border-radius: 6px; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+th { font-family: var(--font-mono); font-size: 11.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-soft); font-weight: 500; background: var(--hash-bg); white-space: nowrap; }
+tbody tr:last-child td { border-bottom: 0; }
+tr.is-target td { background: var(--warn-bg); }
+.t-effect { min-width: 560px; }
+td.mono { font-family: var(--font-mono); font-size: 13px; overflow-wrap: anywhere; white-space: nowrap; }
+.st { font-family: var(--font-mono); font-size: 11.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; border-radius: 999px; padding: 2px 8px; white-space: nowrap; }
+.st.ok { background: var(--ok-bg); color: var(--ok); }
+.st.alt, .st.inv { background: var(--bad-bg); color: var(--bad); }
+.kv { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 6px 14px; margin: 0; font-size: 14px; }
+.kv dt { color: var(--ink-soft); }
+.kv dd { margin: 0; font-family: var(--font-mono); font-size: 13px; overflow-wrap: anywhere; }
+@media (max-width: 480px) { .kv { grid-template-columns: minmax(0, 1fr); gap: 2px; } .kv dd { margin-bottom: 6px; } }
+.conclusion { margin: 0; padding: 12px 14px; border-radius: 6px; background: var(--bad-bg); color: var(--ink); font-size: 15px; }
+.conclusion.ok { background: var(--ok-bg); }
+
+.hash-inp { font-family: var(--font-mono); font-size: 13px; line-height: 1.55; word-break: break-all; resize: none; }
+.hash-inp.ok { border-color: var(--ok); background: var(--ok-bg); }
+.hash-inp.err { border-color: var(--bad); }
+.prev-status { margin: 0; font-size: 13.5px; color: var(--ink-soft); }
+.prev-status.ok { color: var(--ok); font-weight: 600; }
+.prev-status.warn { color: var(--warn); }
+.prev-status.err { color: var(--bad); }
+.hash.copyable { user-select: all; -webkit-user-select: all; cursor: text; }
+.tag.hint-tag { background: var(--accent-soft); color: var(--accent); text-transform: none; letter-spacing: 0; font-family: var(--font-body); }
+
+/* Panel de comandos */
+.cmds { display: grid; gap: 8px; }
+.cmd {
+  display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 12px; align-items: center; text-align: left; width: 100%;
+  font: inherit; color: var(--ink); background: var(--paper); border: 1.5px solid var(--rule); border-radius: 8px;
+  padding: 10px 12px; cursor: pointer; transition: border-color .15s ease, background-color .15s ease;
+}
+.cmd-n {
+  width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-family: var(--font-mono);
+  font-weight: 600; font-size: 15px; border: 1.5px solid var(--rule); color: var(--ink-soft); background: var(--sheet);
+}
+.cmd-title { display: block; font-weight: 700; font-size: 16px; line-height: 1.2; }
+.cmd-sub { display: block; font-size: 13px; color: var(--ink-soft); line-height: 1.35; margin-top: 2px; }
+.cmd[data-state="ready"] { border-color: var(--accent); background: var(--accent-soft); }
+.cmd[data-state="ready"] .cmd-n { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.cmd[data-state="ready"]:hover { border-width: 1.5px; filter: brightness(1.03); }
+.cmd[data-state="done"] .cmd-n { background: var(--ok-bg); border-color: var(--ok); color: var(--ok); }
+.cmd[data-state="active"] { border-color: var(--accent); background: var(--sheet); }
+.cmd[data-state="active"] .cmd-n { border-color: var(--accent); color: var(--accent); }
+.cmd[data-state="active"] .cmd-sub { color: var(--accent); }
+.cmd[data-state="locked"] { opacity: 0.62; }
+.cmd:disabled { cursor: default; }
+
+.callout { border: 1.5px solid var(--accent); background: var(--accent-soft); border-radius: 8px; padding: 16px 20px; display: grid; gap: 4px; }
+.callout p { margin: 0; }
+.callout-title { font-weight: 700; font-size: 1.05rem; color: var(--accent); }
+
+/* Ventana del informe */
+.modal-back {
+  position: fixed; inset: 0; z-index: 50; background: var(--scrim); display: grid; place-items: center;
+  padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+}
+.modal {
+  background: var(--sheet); color: var(--ink); border: 1px solid var(--rule); border-radius: 10px;
+  width: min(460px, 100%); padding: 22px; display: grid; gap: 12px; box-shadow: 0 24px 60px var(--scrim);
+}
+.modal h2 { font-size: 1.3rem; }
+.modal > p { margin: 0; color: var(--ink-soft); font-size: 15px; }
+.modal-form { display: grid; gap: 8px; }
+.form-msg { margin: 0; font-size: 14px; min-height: 1.4em; color: var(--ink-soft); }
+.form-msg.err { color: var(--bad); }
+.form-msg.ok { color: var(--ok); }
+.btns.end { justify-content: flex-end; }
+
+button:focus-visible, input:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; scroll-behavior: auto !important; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="intro">
+    <span class="eyebrow">Taller práctico · Bitcoin, Satoshi Nakamoto 2008</span>
+    <h1>Taller Blockchain</h1>
+    <p>Construye una cadena de cuatro bloques con dos operaciones cada uno. Al crearse, cada bloque recibe su fecha y hora y queda sellado con un hash SHA-256. Después, intenta alterarla y genera tu informe en PDF.</p>
+    <code class="formula">hash = SHA-256( número | fecha y hora | hash anterior | operación 1 | operación 2 )</code>
+  </header>
+
+  <div class="layout">
+    <div class="main">
+      <section aria-labelledby="chain-title" id="chain-section">
+        <div class="section-head">
+          <h2 id="chain-title">Tu cadena</h2>
+          <p id="chain-sub"></p>
+        </div>
+        <div class="chain" id="chain"></div>
+      </section>
+
+      <section id="reports-section" aria-labelledby="reports-title" hidden>
+        <div class="section-head">
+          <h2 id="reports-title">Informes de modificación</h2>
+          <p>Cada vez que registras una modificación se genera un informe con lo que cambió y lo que provocó en la cadena. El más reciente aparece primero.</p>
+        </div>
+        <p class="empty" id="reports-empty">Aún no hay informes. Cambia un dato en cualquier bloque y pulsa «Registrar modificación».</p>
+        <div class="reports" id="reports"></div>
+      </section>
+
+      <section class="howto" aria-labelledby="howto-title">
+        <h2 id="howto-title">Cómo funciona cada bloque</h2>
+        <ol>
+          <li>Al crear un bloque registras sus dos operaciones y copias tú mismo el hash del bloque anterior. La fecha y hora exactas se registran solas.</li>
+          <li>Con todos esos datos se calcula el hash SHA-256 del bloque, que queda registrado como su sello.</li>
+          <li>Si después registras un cambio en cualquier dato, aunque sea un espacio, el hash recalculado ya no coincide con el sello. Los bloques siguientes guardan ese hash, así que también quedan invalidados. Cada modificación registrada genera un informe.</li>
+        </ol>
+        <p class="note">El taller no verifica si quien envía tiene saldo suficiente. Bitcoin controla eso con otras reglas; aquí el objetivo es observar la integridad de la cadena.</p>
+      </section>
+    </div>
+
+    <aside class="side" aria-label="Panel de comandos">
+      <div class="panel" id="panel" data-state="neutral">
+        <span class="label">Panel de comandos</span>
+        <div class="cmds">
+          <button class="cmd" type="button" id="cmd-start">
+            <span class="cmd-n" aria-hidden="true">1</span>
+            <span><span class="cmd-title">Empezar</span><span class="cmd-sub" id="cmd-start-sub"></span></span>
+          </button>
+          <button class="cmd" type="button" id="cmd-modify">
+            <span class="cmd-n" aria-hidden="true">2</span>
+            <span><span class="cmd-title">Modificar</span><span class="cmd-sub" id="cmd-modify-sub"></span></span>
+          </button>
+          <button class="cmd" type="button" id="cmd-report">
+            <span class="cmd-n" aria-hidden="true">3</span>
+            <span><span class="cmd-title">Crear informe</span><span class="cmd-sub" id="cmd-report-sub"></span></span>
+          </button>
+        </div>
+        <div class="mm" id="minimap" role="img"></div>
+        <div aria-live="polite">
+          <p class="status-word" id="status-word"></p>
+          <p class="status-text" id="status-text"></p>
+        </div>
+        <p class="pending-note" id="pending-note" hidden></p>
+        <div class="changes" id="changes" hidden>
+          <span class="label">Cambios registrados respecto al original</span>
+          <ul id="changes-list"></ul>
+        </div>
+        <div class="actions">
+          <button class="btn ghost wide" type="button" id="btn-undo" hidden>Restaurar cadena original</button>
+          <button class="btn ghost wide" type="button" id="btn-restart" hidden>Borrar todo y reiniciar</button>
+        </div>
+        <p class="store-note" id="store-note" hidden>Tu avance se guarda en este navegador.</p>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<div class="modal-back" id="modal" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" aria-describedby="modal-desc">
+    <h2 id="modal-title">Crear informe en PDF</h2>
+    <p id="modal-desc"></p>
+    <form id="report-form" class="modal-form" novalidate>
+      <label class="label" for="student-name">Nombre completo del estudiante</label>
+      <input id="student-name" class="inp" type="text" maxlength="80" autocomplete="name" spellcheck="false">
+      <p class="form-msg" id="form-msg" aria-live="polite"></p>
+      <div class="btns end">
+        <button type="button" class="btn ghost" id="modal-cancel">Cancelar</button>
+        <button type="submit" class="btn" id="modal-ok">Generar PDF</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script>
+const K = new Uint32Array([
+  0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,
+  0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,
+  0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,
+  0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,
+  0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,
+  0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,
+  0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,
+  0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2
+]);
+const encoder = new TextEncoder();
+function sha256(str) {
+  const msg = encoder.encode(str);
+  const len = msg.length;
+  const total = Math.ceil((len + 9) / 64) * 64;
+  const buf = new Uint8Array(total);
+  buf.set(msg);
+  buf[len] = 0x80;
+  const dv = new DataView(buf.buffer);
+  const bits = len * 8;
+  dv.setUint32(total - 8, Math.floor(bits / 0x100000000));
+  dv.setUint32(total - 4, bits >>> 0);
+  const H = [0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19];
+  const w = new Uint32Array(64);
+  for (let off = 0; off < total; off += 64) {
+    for (let i = 0; i < 16; i++) w[i] = dv.getUint32(off + i * 4);
+    for (let i = 16; i < 64; i++) {
+      const x = w[i - 15], y = w[i - 2];
+      const s0 = ((x >>> 7) | (x << 25)) ^ ((x >>> 18) | (x << 14)) ^ (x >>> 3);
+      const s1 = ((y >>> 17) | (y << 15)) ^ ((y >>> 19) | (y << 13)) ^ (y >>> 10);
+      w[i] = (w[i - 16] + s0 + w[i - 7] + s1) >>> 0;
+    }
+    let [a, b, c, d, e, f, g, h] = H;
+    for (let i = 0; i < 64; i++) {
+      const S1 = ((e >>> 6) | (e << 26)) ^ ((e >>> 11) | (e << 21)) ^ ((e >>> 25) | (e << 7));
+      const ch = (e & f) ^ (~e & g);
+      const t1 = (h + S1 + ch + K[i] + w[i]) >>> 0;
+      const S0 = ((a >>> 2) | (a << 30)) ^ ((a >>> 13) | (a << 19)) ^ ((a >>> 22) | (a << 10));
+      const maj = (a & b) ^ (a & c) ^ (b & c);
+      const t2 = (S0 + maj) >>> 0;
+      h = g; g = f; f = e; e = (d + t1) >>> 0; d = c; c = b; b = a; a = (t1 + t2) >>> 0;
+    }
+    H[0] = (H[0] + a) >>> 0; H[1] = (H[1] + b) >>> 0; H[2] = (H[2] + c) >>> 0; H[3] = (H[3] + d) >>> 0;
+    H[4] = (H[4] + e) >>> 0; H[5] = (H[5] + f) >>> 0; H[6] = (H[6] + g) >>> 0; H[7] = (H[7] + h) >>> 0;
+  }
+  return H.map(v => v.toString(16).padStart(8, "0")).join("");
+}
+
+/* ---------- Utilidades ---------- */
+const ZERO = "0".repeat(64);
+const TOTAL = 4;
+const KEY = "taller-blockchain-v1";
+const NAME_KEY = "taller-blockchain-nombre";
+const MAX_REPORTS = 30;
+const EXAMPLES = [
+  [["Ana", "Juan", "10"], ["Juan", "María", "4"]],
+  [["María", "Luis", "2"], ["Ana", "Rosa", "5"]],
+  [["Rosa", "Juan", "1.5"], ["Luis", "Ana", "1"]],
+  [["Juan", "Rosa", "3"], ["María", "Ana", "0.5"]]
+];
+const FIELDS = ["de", "para", "monto"];
+const FIELD_LABEL = { de: "De", para: "Para", monto: "Monto" };
+const PILL = { sealed: "Sellado", ok: "Válido", alt: "Alterado", inv: "Invalidado", draft: "Borrador" };
+const SYM = { sealed: "✓", ok: "✓", alt: "✎", inv: "✕", draft: "+", pending: "" };
+const reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+const pad = n => String(n).padStart(2, "0");
+function formatNow() {
+  const d = new Date();
+  return pad(d.getDate()) + "/" + pad(d.getMonth() + 1) + "/" + d.getFullYear() + " " +
+    pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds());
+}
+const opText = o => o.de + "->" + o.para + ":" + o.monto;
+const hashInput = (i, ts, prev, ops) => [String(i), ts, prev].concat(ops.map(opText)).join("|");
+const hashOf = (i, ts, prev, ops) => sha256(hashInput(i, ts, prev, ops));
+const short = x => x.slice(0, 8) + "…";
+const mid = x => x.slice(0, 16) + "…";
+const cloneOps = ops => ops.map(o => ({ de: o.de, para: o.para, monto: o.monto }));
+const cloneData = d => ({ ts: d.ts, ops: cloneOps(d.ops) });
+const emptyDraft = () => ({ prev: "", ops: [{ de: "", para: "", monto: "" }, { de: "", para: "", monto: "" }] });
+const normHash = v => String(v).replace(/\s+/g, "").toLowerCase();
+const getVal = (o, key) => (key === "ts" ? o.ts : o.ops[key[0]][key[1]]);
+const setVal = (o, key, v) => { if (key === "ts") o.ts = v; else o.ops[key[0]][key[1]] = v; };
+const keyLabel = key => (key === "ts" ? "Fecha y hora" : "Op. " + (key[0] + 1) + " · " + FIELD_LABEL[key[1]]);
+const ALL_KEYS = ["ts"].concat([0, 1].flatMap(k => FIELDS.map(f => [k, f])));
+function diffData(a, b) {
+  return ALL_KEYS.filter(key => getVal(a, key) !== getVal(b, key))
+    .map(key => ({ where: keyLabel(key), from: getVal(a, key), to: getVal(b, key) }));
+}
+function joinNums(list) {
+  const t = list.map(k => "#" + k);
+  return t.length <= 1 ? t.join("") : t.slice(0, -1).join(", ") + " y " + t[t.length - 1];
+}
+function smooth() { return reduceMotion ? "auto" : "smooth"; }
+
+function h(tag, attrs, ...kids) {
+  const n = document.createElement(tag);
+  if (attrs) {
+    for (const [k, v] of Object.entries(attrs)) {
+      if (v == null || v === false) continue;
+      if (k === "class") n.className = v;
+      else if (k === "text") n.textContent = v;
+      else if (k.startsWith("on")) n.addEventListener(k.slice(2), v);
+      else n.setAttribute(k, v === true ? "" : v);
+    }
+  }
+  for (const c of kids.flat()) {
+    if (c == null || c === false) continue;
+    n.append(c.nodeType ? c : document.createTextNode(String(c)));
+  }
+  return n;
+}
+
+/* ---------- Estado ---------- */
+const PHASES = ["inicio", "build", "manip"];
+function validStored(s) {
+  if (!s || !Array.isArray(s.blocks) || s.blocks.length > TOTAL) return false;
+  if (PHASES.indexOf(s.phase) === -1) return false;
+  const okOps = ops => Array.isArray(ops) && ops.length === 2 && ops.every(o => o && FIELDS.every(f => typeof o[f] === "string"));
+  return s.blocks.every(b => b && typeof b.ts === "string" && typeof b.prev === "string" && typeof b.sealed === "string" &&
+    okOps(b.ops) && b.cur && typeof b.cur.ts === "string" && okOps(b.cur.ops));
+}
+function load() {
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (!raw) return null;
+    const s = JSON.parse(raw);
+    if (!validStored(s)) return null;
+    if (s.phase === "manip" && s.blocks.length < TOTAL) s.phase = "build";
+    if (s.phase === "inicio" && s.blocks.length > 0) s.phase = "build";
+    if (!Array.isArray(s.reports)) s.reports = [];
+    if (typeof s.reportSeq !== "number") s.reportSeq = s.reports.length;
+    return s;
+  } catch (e) { return null; }
+}
+let storageOK = false;
+function save() {
+  try { localStorage.setItem(KEY, JSON.stringify(state)); storageOK = true; }
+  catch (e) { storageOK = false; }
+}
+const freshState = () => ({ phase: "inicio", blocks: [], reports: [], reportSeq: 0 });
+
+let state = load() || freshState();
+let draft = emptyDraft();
+let pending = [];
+let refs = [], linkRefs = [], draftRefs = null, draftLinkRef = null;
+
+const chainEl = document.getElementById("chain");
+const chainSub = document.getElementById("chain-sub");
+
+function evaluate() {
+  const B = state.blocks;
+  const cur = B.map((b, i) => hashOf(i, b.cur.ts, b.prev, b.cur.ops));
+  const altered = B.map((b, i) => cur[i] !== b.sealed);
+  const linkOK = B.map((b, i) => (i === 0 ? b.prev === ZERO : b.prev === cur[i - 1]));
+  const firstBad = altered.indexOf(true);
+  const st = B.map((b, i) => (firstBad === -1 || i < firstBad) ? "ok" : altered[i] ? "alt" : "inv");
+  return { cur, altered, linkOK, firstBad, st };
+}
+
+/* ---------- Construcción del DOM ---------- */
+function field(labelText, node, tagNode, forId) {
+  const lab = forId
+    ? h("label", { class: "label", for: forId }, labelText, tagNode || null)
+    : h("span", { class: "label" }, labelText, tagNode || null);
+  return h("div", { class: "field" }, lab, node);
+}
+function hashDetails(r) {
+  r.input = h("code", { class: "hash" });
+  return h("details", null, h("summary", { text: "Ver qué entra al hash" }), r.input);
+}
+function blockHead(i, pill) {
+  return h("header", { class: "block-head" },
+    h("div", { class: "block-id" },
+      h("h3", { class: "num", text: "Bloque #" + i }),
+      i === 0 ? h("span", { class: "kind", text: "Génesis" }) : null),
+    pill);
+}
+
+function makeLink(i) {
+  const knot = h("span", { class: "knot", "aria-hidden": "true" });
+  const p = h("p");
+  const link = h("div", { class: "link" }, knot, p);
+  linkRefs[i] = { link, knot, p };
+  return link;
+}
+
+function makeSealed(b, i) {
+  const r = {};
+  r.pill = h("span", { class: "pill" });
+  const parts = b.ts.split(" ");
+  r.card = h("article", { class: "block", id: "bloque-" + i },
+    blockHead(i, r.pill),
+    h("p", { class: "stamp" }, "Creado el ", h("strong", { text: parts[0] || b.ts }), parts[1] ? " a las " : "", parts[1] ? h("strong", { text: parts[1] }) : null),
+    h("div", { class: "ops" }, b.ops.map((o, k) =>
+      h("div", { class: "op-ro" },
+        h("span", { class: "op-n", text: "Op. " + (k + 1) }),
+        h("span", { class: "op-who" }, o.de, h("span", { class: "arrow", text: " → " }), o.para),
+        h("span", { class: "op-amt", text: o.monto + " BTC" })))),
+    field("Hash anterior", r.prev = h("code", { class: "hash", text: b.prev })),
+    field("Hash del bloque, registrado al crearlo", h("code", { class: "hash copyable", text: b.sealed, title: "Haz clic para seleccionar el hash completo" }),
+      i === state.blocks.length - 1 && state.blocks.length < TOTAL ? h("span", { class: "tag hint-tag", text: "clic para seleccionarlo y copiarlo" }) : null),
+    hashDetails(r));
+  refs[i] = r;
+  return r.card;
+}
+
+function makeEditable(b, i) {
+  if (!pending[i]) pending[i] = cloneData(b.cur);
+  const p = pending[i];
+  const r = { inputs: [] };
+  r.pill = h("span", { class: "pill" });
+
+  function bindInput(inp, key) {
+    inp.addEventListener("input", () => { setVal(pending[i], key, inp.value); updatePending(i); });
+    inp.addEventListener("keydown", ev => { if (ev.key === "Enter") registerChange(i); });
+    r.inputs.push({ el: inp, key });
+  }
+
+  const tsId = "m" + i + "-ts";
+  const tsInput = h("input", { id: tsId, type: "text", class: "inp", value: p.ts, autocomplete: "off", spellcheck: "false" });
+  bindInput(tsInput, "ts");
+
+  const opsBox = h("div", { class: "ops" });
+  p.ops.forEach((o, k) => {
+    const fs = h("fieldset", { class: "op-edit" }, h("legend", { text: "Operación " + (k + 1) }));
+    FIELDS.forEach(f => {
+      const id = "m" + i + "-op" + k + "-" + f;
+      const inp = h("input", { id, type: "text", class: "inp", value: o[f], autocomplete: "off", spellcheck: "false", inputmode: f === "monto" ? "decimal" : null });
+      bindInput(inp, [k, f]);
+      fs.append(h("div", { class: "f f-" + f }, h("label", { class: "label", for: id, text: FIELD_LABEL[f] + (f === "monto" ? " (BTC)" : "") }), inp));
+    });
+    opsBox.append(fs);
+  });
+
+  r.commitMsg = h("p", { class: "commit-msg", "aria-live": "polite" });
+  r.btnDiscard = h("button", { class: "btn ghost", type: "button", text: "Descartar", onclick: () => discardPending(i) });
+  r.btnCommit = h("button", { class: "btn", type: "button", text: "Registrar modificación", onclick: () => registerChange(i) });
+  r.commit = h("div", { class: "commit" }, r.commitMsg, h("div", { class: "btns" }, r.btnDiscard, r.btnCommit));
+
+  r.tagPrev = h("span", { class: "tag bad", text: "no coincide" });
+  r.tagCur = h("span", { class: "tag" });
+  r.card = h("article", { class: "block", id: "bloque-" + i },
+    blockHead(i, r.pill),
+    field("Fecha y hora de creación", tsInput, null, tsId),
+    opsBox,
+    r.commit,
+    field("Hash anterior", r.prev = h("code", { class: "hash", text: b.prev }), r.tagPrev),
+    field("Hash registrado al crearlo", h("code", { class: "hash", text: b.sealed })),
+    field("Hash con los datos registrados", r.cur = h("code", { class: "hash" }), r.tagCur),
+    hashDetails(r));
+  refs[i] = r;
+  return r.card;
+}
+
+function makeDraftLink(n) {
+  const knot = h("span", { class: "knot", "aria-hidden": "true", text: "+" });
+  const p = h("p");
+  const link = h("div", { class: "link next" }, knot, p);
+  draftLinkRef = { link, knot, p, n };
+  return link;
+}
+
+function makeDraft(n) {
+  const dr = { inputs: {} };
+  let prevField;
+  if (n === 0) {
+    prevField = field("Hash anterior · el génesis no tiene bloque previo, por eso son 64 ceros", h("code", { class: "hash", text: ZERO }));
+  } else {
+    dr.prevInput = h("textarea", {
+      id: "d-prev", class: "inp hash-inp", rows: "2", spellcheck: "false", autocomplete: "off", autocapitalize: "off",
+      placeholder: "Pega aquí el hash del bloque #" + (n - 1)
+    });
+    dr.prevInput.value = draft.prev;
+    dr.prevInput.addEventListener("input", () => { draft.prev = dr.prevInput.value; refreshDraft(); });
+    dr.prevInput.addEventListener("keydown", ev => {
+      if (ev.key === "Enter") { ev.preventDefault(); if (!validateDraft()) createBlock(); }
+    });
+    dr.prevStatus = h("p", { class: "prev-status", "aria-live": "polite" });
+    prevField = h("div", { class: "field" },
+      h("label", { class: "label", for: "d-prev" }, "Hash anterior · cópialo del bloque #" + (n - 1)),
+      dr.prevInput, dr.prevStatus);
+  }
+  const opsBox = h("div", { class: "ops" });
+  draft.ops.forEach((o, k) => {
+    const fs = h("fieldset", { class: "op-edit" }, h("legend", { text: "Operación " + (k + 1) }));
+    FIELDS.forEach((f, fi) => {
+      const id = "d-op" + k + "-" + f;
+      const isAmt = f === "monto";
+      const inp = h("input", {
+        id, class: "inp", value: o[f], autocomplete: "off", spellcheck: "false",
+        type: isAmt ? "number" : "text", step: isAmt ? "any" : null, min: isAmt ? "0" : null,
+        inputmode: isAmt ? "decimal" : null, maxlength: isAmt ? null : "30",
+        placeholder: "Ej.: " + EXAMPLES[n][k][fi]
+      });
+      inp.addEventListener("input", () => { o[f] = inp.value; refreshDraft(); });
+      inp.addEventListener("keydown", ev => { if (ev.key === "Enter" && !validateDraft()) createBlock(); });
+      dr.inputs[k + f] = inp;
+      fs.append(h("div", { class: "f f-" + f }, h("label", { class: "label", for: id, text: FIELD_LABEL[f] + (isAmt ? " (BTC)" : "") }), inp));
+    });
+    opsBox.append(fs);
+  });
+  dr.msg = h("p", { class: "draft-msg", "aria-live": "polite" });
+  dr.create = h("button", { class: "btn", type: "button", text: "Crear bloque #" + n, onclick: createBlock });
+  const example = h("button", {
+    class: "btn ghost", type: "button", text: "Usar ejemplo", onclick: () => {
+      EXAMPLES[n].forEach((row, k) => FIELDS.forEach((f, fi) => {
+        draft.ops[k][f] = row[fi];
+        dr.inputs[k + f].value = row[fi];
+      }));
+      refreshDraft();
+    }
+  });
+  dr.card = h("article", { class: "block", id: "bloque-" + n, "data-state": "draft" },
+    blockHead(n, h("span", { class: "pill", text: PILL.draft })),
+    h("p", { class: "hint", text: n === 0
+      ? "Registra dos operaciones. La fecha y hora se asignan solas en el momento en que creas el bloque."
+      : "Copia el hash del bloque #" + (n - 1) + " y registra dos operaciones. La fecha y hora se asignan solas en el momento en que creas el bloque." }),
+    prevField,
+    opsBox,
+    h("div", { class: "draft-actions" }, dr.msg, h("div", { class: "btns" }, example, dr.create)));
+  draftRefs = dr;
+  return dr.card;
+}
+
+function addPendingPlaceholders(from, withFirstLink) {
+  for (let k = from; k < TOTAL; k++) {
+    if (k > from || withFirstLink) chainEl.append(h("div", { class: "link idle", "aria-hidden": "true" }));
+    chainEl.append(h("div", { class: "pending" }, h("span", { class: "num-sm", text: "Bloque #" + k }), h("span", { text: "Pendiente" })));
+  }
+}
+
+function renderAll() {
+  chainEl.textContent = "";
+  refs = []; linkRefs = []; draftRefs = null; draftLinkRef = null;
+  const n = state.blocks.length;
+  const phase = state.phase;
+  if (phase === "inicio") {
+    chainSub.textContent = "Pulsa «Empezar» en el panel de comandos para habilitar el registro de los bloques #0 al #3.";
+    chainEl.append(h("div", { class: "callout" },
+      h("p", { class: "callout-title", text: "Tu cadena aún no empieza" }),
+      h("p", { text: "Usa el comando 1, «Empezar», para habilitar el registro. Luego crearás cuatro bloques, cada uno con dos operaciones." })));
+    chainEl.append(h("div", { class: "link idle", "aria-hidden": "true" }));
+    addPendingPlaceholders(0, false);
+  } else {
+    chainSub.textContent = phase === "manip"
+      ? "Modo modificación: cambia cualquier fecha, nombre o monto y pulsa «Registrar modificación» en ese bloque. Recién entonces se recalcula la cadena y se genera un informe."
+      : "Crea los bloques en orden, del #0 al #3. Cada bloque guarda el hash del bloque anterior.";
+    state.blocks.forEach((b, i) => {
+      if (i > 0) chainEl.append(makeLink(i));
+      chainEl.append(phase === "manip" ? makeEditable(b, i) : makeSealed(b, i));
+    });
+    if (phase === "build" && n < TOTAL) {
+      if (n > 0) chainEl.append(makeDraftLink(n));
+      chainEl.append(makeDraft(n));
+      addPendingPlaceholders(n + 1, true);
+    }
+  }
+  document.getElementById("reports-section").hidden = phase !== "manip";
+  refresh();
+  if (phase === "manip") state.blocks.forEach((b, i) => updatePending(i));
+  renderReports();
+}
+
+/* ---------- Borrador ---------- */
+function checkPrev(n) {
+  if (n === 0) return { ok: true, kind: "ok", msg: "" };
+  const target = state.blocks[n - 1].sealed;
+  const v = normHash(draft.prev);
+  const firstDiff = () => { let k = 0; while (k < v.length && k < 64 && v[k] === target[k]) k++; return k + 1; };
+  if (!v) return { ok: false, kind: "idle", msg: "Selecciona el hash del bloque #" + (n - 1) + ", cópialo y pégalo aquí. Tiene 64 caracteres." };
+  if (/[^0-9a-f]/.test(v)) return { ok: false, kind: "err", msg: "Un hash solo tiene números del 0 al 9 y letras de la a a la f. Revisa lo que pegaste." };
+  if (v.length > 64) return { ok: false, kind: "err", msg: "Tiene " + v.length + " caracteres; un hash SHA-256 tiene exactamente 64." };
+  if (v.length < 64) {
+    return target.startsWith(v)
+      ? { ok: false, kind: "warn", msg: "Vas bien: " + v.length + " de 64 caracteres." }
+      : { ok: false, kind: "err", msg: "No coincide con el hash del bloque #" + (n - 1) + ": el carácter " + firstDiff() + " es distinto." };
+  }
+  if (v !== target) return { ok: false, kind: "err", msg: "No coincide con el hash del bloque #" + (n - 1) + ". El primer error está en el carácter " + firstDiff() + " de 64. La red rechazaría este bloque." };
+  return { ok: true, kind: "ok", msg: "✓ Coincide con el hash del bloque #" + (n - 1) + "." };
+}
+
+function opsError() {
+  for (let k = 0; k < 2; k++) {
+    const o = draft.ops[k], L = "Operación " + (k + 1) + ": ";
+    if (!o.de.trim()) return L + "escribe quién envía.";
+    if (!o.para.trim()) return L + "escribe quién recibe.";
+    if (o.de.trim().toLowerCase() === o.para.trim().toLowerCase()) return L + "quien envía y quien recibe deben ser personas distintas.";
+    const m = Number(o.monto);
+    if (String(o.monto).trim() === "" || !isFinite(m) || m <= 0) return L + "escribe un monto mayor que 0.";
+  }
+  return "";
+}
+function validateDraft() {
+  const n = state.blocks.length;
+  const pc = checkPrev(n);
+  if (!pc.ok) return "Falta copiar correctamente el hash del bloque #" + (n - 1) + " en «Hash anterior».";
+  return opsError();
+}
+function refreshDraft() {
+  if (!draftRefs) return;
+  const n = state.blocks.length;
+  const pc = checkPrev(n);
+  if (draftRefs.prevInput) {
+    draftRefs.prevStatus.textContent = pc.msg;
+    draftRefs.prevStatus.className = "prev-status " + pc.kind;
+    draftRefs.prevInput.classList.toggle("ok", pc.ok);
+    draftRefs.prevInput.classList.toggle("err", pc.kind === "err");
+  }
+  if (draftLinkRef) {
+    const L = draftLinkRef;
+    L.link.className = "link" + (pc.ok ? "" : " next");
+    L.knot.textContent = pc.ok ? "✓" : "+";
+    L.p.textContent = pc.ok
+      ? "Eslabón listo: el bloque #" + L.n + " guardará el hash del #" + (L.n - 1) + "."
+      : "Copia el hash del bloque #" + (L.n - 1) + " en el campo «Hash anterior» del bloque #" + L.n + ".";
+  }
+  const oe = opsError();
+  const blank = draft.ops.every(o => !o.de && !o.para && !o.monto);
+  const err = validateDraft();
+  draftRefs.create.disabled = !!err;
+  draftRefs.msg.classList.toggle("ready", !err);
+  if (!err) draftRefs.msg.textContent = "Listo. Al crearlo se registrará la fecha y hora de este momento.";
+  else if (blank) draftRefs.msg.textContent = pc.ok ? "Completa las dos operaciones para poder crear el bloque." : "Copia el hash anterior y completa las dos operaciones para poder crear el bloque.";
+  else draftRefs.msg.textContent = oe || err;
+}
+function focusDraft() {
+  if (!draftRefs) return;
+  const first = draftRefs.prevInput || draftRefs.inputs["0de"];
+  draftRefs.card.scrollIntoView({ behavior: smooth(), block: "start" });
+  setTimeout(() => first.focus({ preventScroll: true }), reduceMotion ? 0 : 350);
+}
+function createBlock() {
+  if (state.phase !== "build" || validateDraft()) return;
+  const i = state.blocks.length;
+  if (i >= TOTAL) return;
+  const prev = i === 0 ? ZERO : state.blocks[i - 1].sealed;
+  const ts = formatNow();
+  const ops = draft.ops.map(o => ({ de: o.de.trim(), para: o.para.trim(), monto: String(Number(o.monto)) }));
+  const sealed = hashOf(i, ts, prev, ops);
+  state.blocks.push({ ts, prev, ops, sealed, cur: { ts, ops: cloneOps(ops) } });
+  draft = emptyDraft();
+  renderAll();
+  if (state.blocks.length < TOTAL) focusDraft();
+  else cmdModify.focus();
+}
+
+/* ---------- Modificaciones pendientes ---------- */
+function styleInputs(i) {
+  const r = refs[i], b = state.blocks[i], p = pending[i];
+  if (!r || !r.inputs || !p) return;
+  r.inputs.forEach(x => {
+    const pv = getVal(p, x.key), cv = getVal(b.cur, x.key), ov = getVal(b, x.key);
+    x.el.classList.toggle("unsaved", pv !== cv);
+    x.el.classList.toggle("edited", pv === cv && cv !== ov);
+  });
+}
+function updatePending(i) {
+  const r = refs[i], b = state.blocks[i], p = pending[i];
+  if (!r || !r.commit || !p) return;
+  const diffs = diffData(b.cur, p);
+  const has = diffs.length > 0;
+  r.btnCommit.disabled = !has;
+  r.btnDiscard.hidden = !has;
+  r.commit.classList.toggle("has", has);
+  r.commitMsg.textContent = has
+    ? (diffs.length === 1 ? "1 cambio sin registrar." : diffs.length + " cambios sin registrar.") + " El hash se recalcula cuando registres la modificación."
+    : "Cambia algún dato de este bloque y registra la modificación aquí.";
+  styleInputs(i);
+  updatePendingNote();
+}
+function pendingBlocks() {
+  return state.blocks.map((b, i) => i).filter(i => pending[i] && diffData(state.blocks[i].cur, pending[i]).length);
+}
+function updatePendingNote() {
+  const note = document.getElementById("pending-note");
+  if (state.phase !== "manip") { note.hidden = true; return; }
+  const list = pendingBlocks();
+  note.hidden = list.length === 0;
+  if (list.length) {
+    note.textContent = (list.length === 1 ? "Cambios sin registrar en el bloque " : "Cambios sin registrar en los bloques ") + joinNums(list) +
+      ". Pulsa «Registrar modificación» en " + (list.length === 1 ? "ese bloque" : "cada bloque") + " para ver su efecto.";
+  }
+}
+function discardPending(i) {
+  const b = state.blocks[i];
+  pending[i] = cloneData(b.cur);
+  refs[i].inputs.forEach(x => { x.el.value = getVal(pending[i], x.key); });
+  updatePending(i);
+}
+
+/* ---------- Registrar modificación e informe en pantalla ---------- */
+function reasonFor(k, ev, i) {
+  const s = ev.st[k];
+  if (s === "ok") {
+    if (k < i) return "Está antes del bloque modificado, así que no se ve afectado.";
+    if (k === i) return "Su hash recalculado coincide con el registrado al crearlo.";
+    return "Su hash y su eslabón siguen intactos.";
+  }
+  if (s === "alt") return "Su hash recalculado (" + mid(ev.cur[k]) + ") no coincide con el registrado al crearlo (" + mid(state.blocks[k].sealed) + ").";
+  if (!ev.linkOK[k]) return "Guarda como hash anterior " + mid(state.blocks[k].prev) + ", pero el hash actual del bloque #" + (k - 1) + " es " + mid(ev.cur[k - 1]) + ".";
+  return "Su eslabón con el bloque #" + (k - 1) + " coincide, pero ese bloque ya no es válido; por eso este también queda fuera de la cadena válida.";
+}
+
+function buildConclusion(i, before, after) {
+  const last = TOTAL - 1;
+  if (after.firstBad === -1) {
+    return { ok: true, text: "La cadena queda íntegra: todos los hashes coinciden con los registrados al crear cada bloque." };
+  }
+  const outList = after.st.map((s, k) => (s !== "ok" ? k : -1)).filter(k => k >= 0);
+  const newly = after.st.map((s, k) => (s !== "ok" && before.st[k] === "ok" ? k : -1)).filter(k => k >= 0);
+  let text;
+  if (newly.length) {
+    text = "La modificación rompió la cadena desde el bloque #" + after.firstBad + ". " +
+      (outList.length === 1 ? "1 de " + TOTAL + " bloques quedó" : outList.length + " de " + TOTAL + " bloques quedaron") +
+      " fuera de la cadena válida: " + joinNums(outList) + ". ";
+    text += i < last
+      ? "Para ocultarla habría que recalcular los hashes de " + (last - i === 1 ? "el bloque siguiente" : "todos los bloques siguientes") +
+        ", y aun así la copia no coincidiría con la de los demás nodos de la red."
+      : "Aunque no hay bloques posteriores, la alteración queda a la vista porque el hash del bloque no coincide con el registrado.";
+  } else if (before.altered[i] && !after.altered[i]) {
+    text = "El bloque #" + i + " volvió a sus datos originales y su hash coincide otra vez con el registrado. " +
+      (after.firstBad > before.firstBad
+        ? "La cadena mejora, pero sigue rota, ahora desde el bloque #" + after.firstBad + "."
+        : "Aun así, la cadena sigue rota desde el bloque #" + after.firstBad + " por otras alteraciones.");
+  } else if (before.firstBad !== -1 && after.firstBad > before.firstBad) {
+    text = "Esta modificación revirtió parte de los cambios anteriores, pero la cadena sigue rota, ahora desde el bloque #" + after.firstBad + ".";
+  } else {
+    text = "La cadena ya estaba rota desde el bloque #" + before.firstBad + ". Esta modificación agrega una alteración más en el bloque #" + i + ", que ya estaba fuera de la cadena válida.";
+  }
+  return { ok: false, text };
+}
+
+function registerChange(i) {
+  if (state.phase !== "manip") return;
+  const b = state.blocks[i], p = pending[i];
+  if (!b || !p) return;
+  const changes = diffData(b.cur, p);
+  if (!changes.length) return;
+  const before = evaluate();
+  b.cur = cloneData(p);
+  const after = evaluate();
+  const concl = buildConclusion(i, before, after);
+  state.reportSeq = (state.reportSeq || 0) + 1;
+  const report = {
+    n: state.reportSeq,
+    time: formatNow(),
+    block: i,
+    changes,
+    hashBefore: before.cur[i],
+    hashAfter: after.cur[i],
+    sealed: b.sealed,
+    blockAltered: after.altered[i],
+    rows: state.blocks.map((_, k) => ({ k, before: before.st[k], after: after.st[k], reason: reasonFor(k, after, i) })),
+    ok: concl.ok,
+    conclusion: concl.text
+  };
+  state.reports.unshift(report);
+  if (state.reports.length > MAX_REPORTS) state.reports.length = MAX_REPORTS;
+  pending[i] = cloneData(b.cur);
+  refresh();
+  updatePending(i);
+  renderReports(report.n);
+}
+
+function blockStatusText(rep) {
+  return rep.blockAltered
+    ? "El bloque #" + rep.block + " quedó alterado: su nuevo hash no coincide con el registrado al crearlo."
+    : "El bloque #" + rep.block + " coincide otra vez con el hash registrado al crearlo.";
+}
+
+function renderReport(rep, fresh) {
+  const pill = s => h("span", { class: "st " + s, text: PILL[s] });
+  const parts = rep.time.split(" ");
+  const changesTable = h("div", { class: "table-wrap" },
+    h("table", null,
+      h("thead", null, h("tr", null, h("th", { text: "Campo" }), h("th", { text: "Valor anterior" }), h("th", { text: "Valor nuevo" }))),
+      h("tbody", null, rep.changes.map(c => h("tr", null,
+        h("td", { text: c.where }),
+        h("td", { class: "mono", text: c.from === "" ? "(vacío)" : c.from }),
+        h("td", { class: "mono", text: c.to === "" ? "(vacío)" : c.to }))))));
+  const effectTable = h("div", { class: "table-wrap" },
+    h("table", { class: "t-effect" },
+      h("thead", null, h("tr", null, h("th", { text: "Bloque" }), h("th", { text: "Antes" }), h("th", { text: "Después" }), h("th", { text: "Motivo" }))),
+      h("tbody", null, rep.rows.map(row => h("tr", { class: row.k === rep.block ? "is-target" : null },
+        h("td", { class: "mono", text: "#" + row.k + (row.k === rep.block ? " (modificado)" : "") }),
+        h("td", null, pill(row.before)),
+        h("td", null, pill(row.after)),
+        h("td", { text: row.reason }))))));
+  return h("article", { class: "report" + (fresh ? " fresh" : ""), id: "informe-" + rep.n, tabindex: "-1" },
+    h("header", { class: "report-head" },
+      h("h3", { text: "Informe de modificación N.º " + rep.n }),
+      h("p", { class: "report-meta" },
+        "Registrado el ", h("strong", { text: parts[0] }), " a las ", h("strong", { text: parts[1] || "" }),
+        " · Bloque modificado: ", h("strong", { text: "#" + rep.block }))),
+    h("section", null, h("h4", { text: "1. Modificación registrada" }), changesTable),
+    h("section", null,
+      h("h4", { text: "2. Efecto en el bloque #" + rep.block }),
+      h("dl", { class: "kv" },
+        h("dt", { text: "Hash antes del cambio" }), h("dd", { text: mid(rep.hashBefore) }),
+        h("dt", { text: "Hash después del cambio" }), h("dd", { text: mid(rep.hashAfter) }),
+        h("dt", { text: "Hash registrado al crearlo" }), h("dd", { text: mid(rep.sealed) })),
+      h("p", { class: "report-text", text: blockStatusText(rep) })),
+    h("section", null, h("h4", { text: "3. Efecto en la cadena" }), effectTable),
+    h("section", null,
+      h("h4", { text: "4. Conclusión" }),
+      h("p", { class: "conclusion" + (rep.ok ? " ok" : ""), text: rep.conclusion })));
+}
+
+function renderReports(freshN) {
+  const box = document.getElementById("reports");
+  const empty = document.getElementById("reports-empty");
+  box.textContent = "";
+  empty.hidden = state.reports.length > 0;
+  let freshEl = null;
+  state.reports.forEach(rep => {
+    const el = renderReport(rep, rep.n === freshN);
+    if (rep.n === freshN) freshEl = el;
+    box.append(el);
+  });
+  if (freshEl) {
+    freshEl.scrollIntoView({ behavior: smooth(), block: "start" });
+    setTimeout(() => freshEl.focus({ preventScroll: true }), reduceMotion ? 0 : 400);
+    setTimeout(() => freshEl.classList.remove("fresh"), 2600);
+  }
+}
+
+/* ---------- Panel de comandos ---------- */
+const panel = document.getElementById("panel");
+const minimap = document.getElementById("minimap");
+const mmNodes = [], mmLines = [];
+for (let k = 0; k < TOTAL; k++) {
+  if (k > 0) { const ln = h("div", { class: "mm-line" }); mmLines[k] = ln; minimap.append(ln); }
+  const sym = h("span", { class: "mm-sym" });
+  const node = h("div", { class: "mm-node" }, h("span", { class: "mm-num", text: "#" + k }), sym);
+  mmNodes[k] = { node, sym };
+  minimap.append(node);
+}
+const cmdStart = document.getElementById("cmd-start");
+const cmdModify = document.getElementById("cmd-modify");
+const cmdReport = document.getElementById("cmd-report");
+const btnUndo = document.getElementById("btn-undo");
+const btnRestart = document.getElementById("btn-restart");
+
+function setCmd(btn, num, cmdState, sub) {
+  btn.dataset.state = cmdState;
+  btn.disabled = cmdState !== "ready";
+  btn.querySelector(".cmd-n").textContent = cmdState === "done" ? "✓" : num;
+  btn.querySelector(".cmd-sub").textContent = sub;
+}
+
+cmdStart.addEventListener("click", () => {
+  if (state.phase !== "inicio") return;
+  state.phase = "build";
+  renderAll();
+  focusDraft();
+});
+cmdModify.addEventListener("click", () => {
+  if (state.phase !== "build" || state.blocks.length < TOTAL) return;
+  state.phase = "manip";
+  pending = [];
+  renderAll();
+  document.getElementById("chain-section").scrollIntoView({ behavior: smooth(), block: "start" });
+});
+cmdReport.addEventListener("click", () => {
+  if (state.phase !== "manip" || !state.reports.length) return;
+  openModal();
+});
+btnUndo.addEventListener("click", () => {
+  state.blocks.forEach(b => { b.cur = { ts: b.ts, ops: cloneOps(b.ops) }; });
+  pending = [];
+  renderAll();
+});
+let restartArmed = false, restartTimer = null;
+function disarmRestart() {
+  restartArmed = false;
+  clearTimeout(restartTimer);
+  btnRestart.textContent = "Borrar todo y reiniciar";
+  btnRestart.classList.remove("danger");
+  btnRestart.classList.add("ghost");
+}
+btnRestart.addEventListener("click", () => {
+  if (!restartArmed) {
+    restartArmed = true;
+    btnRestart.textContent = "Pulsa otra vez para borrar la cadena y los informes";
+    btnRestart.classList.remove("ghost");
+    btnRestart.classList.add("danger");
+    restartTimer = setTimeout(disarmRestart, 4000);
+    return;
+  }
+  disarmRestart();
+  state = freshState();
+  draft = emptyDraft();
+  pending = [];
+  renderAll();
+  window.scrollTo({ top: 0, behavior: smooth() });
+});
+
+function registeredChanges() {
+  const out = [];
+  state.blocks.forEach((b, i) => diffData(b, b.cur).forEach(c => out.push(Object.assign({ i }, c))));
+  return out;
+}
+function outOfChain(ev) {
+  return ev.st.map((s, k) => (s !== "ok" ? k : -1)).filter(k => k >= 0);
+}
+
+function renderPanel(ev) {
+  const n = state.blocks.length;
+  const phase = state.phase;
+  const manip = phase === "manip";
+  const st = manip ? ev.st : ev.st.map(() => "sealed");
+
+  setCmd(cmdStart, "1", phase === "inicio" ? "ready" : "done",
+    phase === "inicio" ? "Habilita el registro de bloques" : "Registro habilitado · " + n + " de " + TOTAL + " bloques");
+  setCmd(cmdModify, "2",
+    manip ? "active" : (phase === "build" && n === TOTAL ? "ready" : "locked"),
+    manip ? "Modo modificación activo" : (n === TOTAL ? "Altera datos y registra cada cambio" : "Se habilita al crear los " + TOTAL + " bloques"));
+  setCmd(cmdReport, "3",
+    manip && state.reports.length ? "ready" : "locked",
+    !manip ? "Se habilita en el modo modificación"
+      : state.reports.length ? "Genera un PDF con tu cadena y " + (state.reports.length === 1 ? "tu informe" : "tus " + state.reports.length + " informes")
+      : "Registra al menos una modificación");
+
+  const summary = [];
+  for (let k = 0; k < TOTAL; k++) {
+    const s = k < n ? st[k] : (phase === "build" && k === n ? "draft" : "pending");
+    mmNodes[k].node.dataset.state = s;
+    mmNodes[k].sym.textContent = SYM[s];
+    summary.push("Bloque " + k + ": " + (PILL[s] || "pendiente"));
+    const orphanLine = manip && ev.firstBad !== -1 && k - 1 > ev.firstBad;
+    if (k > 0) mmLines[k].dataset.state = k < n ? (ev.linkOK[k] && !orphanLine ? "ok" : "broken") : "idle";
+  }
+  minimap.setAttribute("aria-label", "Mapa de la cadena. " + summary.join(". "));
+
+  const word = document.getElementById("status-word");
+  const text = document.getElementById("status-text");
+  const changes = manip ? registeredChanges() : [];
+  if (phase === "inicio") {
+    panel.dataset.state = "neutral";
+    word.textContent = "Listo para empezar";
+    text.textContent = "Pulsa «Empezar» para habilitar el registro. Crearás cuatro bloques con dos operaciones cada uno.";
+  } else if (!manip) {
+    panel.dataset.state = n === TOTAL ? "ok" : "neutral";
+    if (n === 0) {
+      word.textContent = "Crea el bloque #0";
+      text.textContent = "Registra dos operaciones y crea el bloque génesis. Cada bloque recibe automáticamente su fecha y hora.";
+    } else if (n < TOTAL) {
+      word.textContent = "Sigue con el bloque #" + n;
+      text.textContent = "Copia el hash del bloque #" + (n - 1) + " en el campo «Hash anterior» del bloque #" + n + " y registra sus dos operaciones. Así quedan encadenados.";
+    } else {
+      word.textContent = "Cadena completa";
+      text.textContent = "Creaste 4 bloques con 8 operaciones. Pulsa «Modificar» e intenta alterar algún dato sin que se note.";
+    }
+  } else if (ev.firstBad === -1) {
+    panel.dataset.state = "ok";
+    word.textContent = "Cadena íntegra";
+    text.textContent = state.reports.length
+      ? "Todos los hashes coinciden con los registrados. Puedes seguir modificando o pulsar «Crear informe»."
+      : "Todos los hashes coinciden con los registrados al crear cada bloque. Cambia una fecha, un nombre o un monto y registra la modificación.";
+  } else {
+    panel.dataset.state = "bad";
+    word.textContent = "Rota desde el bloque #" + ev.firstBad;
+    const outList = outOfChain(ev);
+    text.textContent = (outList.length === 1 ? "El bloque " + joinNums(outList) + " está fuera" : "Los bloques " + joinNums(outList) + " están fuera") +
+      " de la cadena válida." + (state.reports.length ? " Revisa el informe N.º " + state.reports[0].n + " o pulsa «Crear informe»." : "");
+  }
+
+  const box = document.getElementById("changes");
+  const ul = document.getElementById("changes-list");
+  ul.textContent = "";
+  box.hidden = changes.length === 0;
+  changes.forEach(c => {
+    ul.append(h("li", null,
+      h("b", { text: "Bloque #" + c.i + " · " + c.where + ": " }),
+      h("span", { class: "from", text: c.from || "(vacío)" }), " → ",
+      h("span", { text: c.to || "(vacío)" })));
+  });
+
+  btnUndo.hidden = !(manip && changes.length > 0);
+  btnRestart.hidden = phase === "inicio";
+}
+
+/* ---------- Recalcular (solo con datos registrados) ---------- */
+function refresh() {
+  const B = state.blocks;
+  const manip = state.phase === "manip";
+  const ev = evaluate();
+  const st = manip ? ev.st : B.map(() => "sealed");
+
+  B.forEach((b, i) => {
+    const r = refs[i];
+    if (!r) return;
+    r.card.dataset.state = st[i];
+    r.pill.textContent = PILL[st[i]];
+    r.input.textContent = "SHA-256(\n  " + hashInput(i, b.cur.ts, b.prev, b.cur.ops).split("|").join("\n| ") + "\n)";
+    if (manip) {
+      r.prev.classList.toggle("mismatch", !ev.linkOK[i]);
+      r.tagPrev.hidden = ev.linkOK[i];
+      r.cur.textContent = ev.cur[i];
+      r.cur.classList.toggle("mismatch", ev.altered[i]);
+      r.tagCur.textContent = ev.altered[i] ? "no coincide" : "coincide";
+      r.tagCur.className = "tag " + (ev.altered[i] ? "bad" : "good");
+      styleInputs(i);
+    }
+    const L = linkRefs[i];
+    if (i > 0 && L) {
+      const orphan = manip && ev.linkOK[i] && ev.firstBad !== -1 && i - 1 > ev.firstBad;
+      L.link.classList.toggle("broken", !ev.linkOK[i] || orphan);
+      L.knot.textContent = orphan ? "!" : ev.linkOK[i] ? "✓" : "✕";
+      L.p.textContent = "";
+      if (orphan) {
+        L.p.append("El #" + i + " guarda bien el hash del #" + (i - 1) + " (", h("code", { text: short(b.prev) }), "), pero el #" + (i - 1) + " ya no es válido, así que este bloque también queda fuera de la cadena válida.");
+      } else if (ev.linkOK[i]) {
+        L.p.append("El bloque #" + i + " guarda el hash del #" + (i - 1) + ": ", h("code", { text: short(b.prev) }), " = ", h("code", { text: short(ev.cur[i - 1]) }));
+      } else {
+        L.p.append("Eslabón roto. El #" + i + " guarda ", h("code", { text: short(b.prev) }), ", pero el hash actual del #" + (i - 1) + " es ", h("code", { text: short(ev.cur[i - 1]) }));
+      }
+    }
+  });
+
+  refreshDraft();
+  renderPanel(ev);
+  updatePendingNote();
+  save();
+  document.getElementById("store-note").hidden = !storageOK;
+}
+
+/* ---------- PDF ---------- */
+function pdfText(s) {
+  return String(s)
+    .replace(/…/g, "...").replace(/→/g, "->").replace(/[–—]/g, "-")
+    .replace(/[“”]/g, '"').replace(/[‘’]/g, "'")
+    .normalize("NFC").replace(/[^\x00-\xFF]/g, "?");
+}
+function slugName(name) {
+  const s = name.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^A-Za-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+  return s || "estudiante";
+}
+
+function buildPDF(studentName, issuedAt) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: "mm", format: "a4" });
+  doc.setLineHeightFactor(1.35);
+  const PW = 210, PH = 297, M = 16, CW = PW - 2 * M, BOTTOM = PH - 18;
+  const C = {
+    ink: [23, 32, 49], soft: [88, 99, 119], rule: [211, 217, 227], head: [238, 241, 247],
+    accent: [39, 71, 184], accentBg: [226, 231, 250], ok: [27, 116, 72], okBg: [222, 241, 230],
+    bad: [180, 35, 24], badBg: [251, 227, 224], warnBg: [250, 237, 213]
+  };
+  const T = pdfText;
+  const ev = evaluate();
+  const name = T(studentName);
+  let y = M;
+
+  const tc = c => doc.setTextColor(c[0], c[1], c[2]);
+  const fc = c => doc.setFillColor(c[0], c[1], c[2]);
+  const dc = c => doc.setDrawColor(c[0], c[1], c[2]);
+  const font = (face, style, size) => { doc.setFont(face, style); doc.setFontSize(size); };
+  const lh = size => size * 0.3528 * 1.35;
+  const asc = size => size * 0.3528 * 0.82;
+  function ensure(hgt) { if (y + hgt > BOTTOM) { doc.addPage(); y = M; } }
+  function lines(text, width, face, style, size) { font(face, style, size); return doc.splitTextToSize(T(text), width); }
+  function para(text, o = {}) {
+    const size = o.size || 10, face = o.face || "helvetica", style = o.style || "normal", x = o.x || M, width = o.width || CW;
+    const ls = lines(text, width, face, style, size);
+    const hgt = ls.length * lh(size);
+    ensure(hgt);
+    tc(o.color || C.ink);
+    doc.text(ls, x, y + asc(size));
+    y += hgt + (o.gap == null ? 2 : o.gap);
+  }
+  function sectionTitle(text) {
+    ensure(16);
+    y += 3;
+    font("helvetica", "bold", 13); tc(C.accent);
+    doc.text(T(text), M, y + asc(13));
+    y += lh(13) + 1;
+    dc(C.accent); doc.setLineWidth(0.4); doc.line(M, y, M + CW, y);
+    y += 4;
+  }
+  function subTitle(text) {
+    ensure(10);
+    font("helvetica", "bold", 10.5); tc(C.ink);
+    doc.text(T(text), M, y + asc(10.5));
+    y += lh(10.5) + 1.5;
+  }
+  const CHIP = {
+    ok: [C.okBg, C.ok, "Válido"], alt: [C.badBg, C.bad, "Alterado"], inv: [C.badBg, C.bad, "Invalidado"]
+  };
+  function chip(kind, x, top) {
+    const [bg, fg, label] = CHIP[kind];
+    font("helvetica", "bold", 7.5);
+    const w = doc.getTextWidth(T(label.toUpperCase())) + 4;
+    fc(bg); doc.roundedRect(x, top, w, 4.8, 1.6, 1.6, "F");
+    tc(fg); doc.text(T(label.toUpperCase()), x + 2, top + 3.4);
+    return w;
+  }
+  function kvRows(rows, labelW) {
+    rows.forEach(([label, value, mono]) => {
+      const vl = lines(value, CW - labelW, mono ? "courier" : "helvetica", mono ? "normal" : "bold", mono ? 8.5 : 10);
+      const size = mono ? 8.5 : 10;
+      const hgt = Math.max(lh(10), vl.length * lh(size));
+      ensure(hgt);
+      font("helvetica", "normal", 9.5); tc(C.soft);
+      doc.text(T(label), M, y + asc(10));
+      font(mono ? "courier" : "helvetica", mono ? "normal" : "bold", size); tc(C.ink);
+      doc.text(vl, M + labelW, y + asc(10));
+      y += hgt + 1;
+    });
+  }
+  function table(cols, rows, o = {}) {
+    const size = 8.5, padX = 2, padY = 1.8, L = lh(size);
+    const drawHead = () => {
+      const hh = lh(7.5) + padY * 2;
+      fc(C.head); doc.rect(M, y, CW, hh, "F");
+      font("helvetica", "bold", 7.5); tc(C.soft);
+      let x = M;
+      cols.forEach(c => { doc.text(T(c.title.toUpperCase()), x + padX, y + padY + asc(7.5)); x += c.w; });
+      y += hh;
+    };
+    ensure(lh(7.5) + padY * 2 + L + padY * 2);
+    drawHead();
+    rows.forEach((row, ri) => {
+      const cells = row.map((cell, ci) => {
+        const c = cols[ci];
+        if (cell && typeof cell === "object" && cell.chip) return { chip: cell.chip, n: 1 };
+        const ls = lines(cell, c.w - padX * 2, c.mono ? "courier" : "helvetica", "normal", size);
+        return { ls, n: ls.length, mono: c.mono };
+      });
+      const rh = Math.max(...cells.map(c => c.n)) * L + padY * 2 + 0.6;
+      if (y + rh > BOTTOM) { doc.addPage(); y = M; drawHead(); }
+      if (o.highlight && o.highlight(ri)) { fc(C.warnBg); doc.rect(M, y, CW, rh, "F"); }
+      let x = M;
+      cells.forEach((cell, ci) => {
+        if (cell.chip) chip(cell.chip, x + padX, y + padY - 0.2);
+        else {
+          font(cell.mono ? "courier" : "helvetica", "normal", size); tc(C.ink);
+          doc.text(cell.ls, x + padX, y + padY + asc(size));
+        }
+        x += cols[ci].w;
+      });
+      dc(C.rule); doc.setLineWidth(0.2); doc.line(M, y + rh, M + CW, y + rh);
+      y += rh;
+    });
+    y += 3;
+  }
+  function box(text, bg, o = {}) {
+    const size = o.size || 10, padX = 4, padY = 3;
+    const ls = lines(text, CW - padX * 2, "helvetica", o.style || "normal", size);
+    const hgt = ls.length * lh(size) + padY * 2;
+    ensure(hgt);
+    fc(bg); doc.roundedRect(M, y, CW, hgt, 1.8, 1.8, "F");
+    font("helvetica", o.style || "normal", size); tc(C.ink);
+    doc.text(ls, M + padX, y + padY + asc(size));
+    y += hgt + 3;
+  }
+
+  /* Tarjeta de un bloque */
+  function drawBlockCard(i, ts, ops, prev, hash, kind) {
+    const opLines = ops.map((o, k) => lines("Operación " + (k + 1) + ":  " + o.de + " -> " + o.para + "   " + o.monto + " BTC", CW - 8, "helvetica", "normal", 10));
+    const inner = lh(12) + 1 + lh(9) + 2 + opLines.reduce((a, l) => a + l.length * lh(10), 0) + 2 + (lh(8) + lh(8.5) + 1) * 2;
+    const bh = inner + 5;
+    ensure(bh + 2);
+    const top = y;
+    const good = kind === "ok";
+    dc(good ? C.ok : C.bad); doc.setLineWidth(good ? 0.35 : 0.5);
+    doc.roundedRect(M, top, CW, bh, 2, 2, "S");
+    let yy = top + 4;
+    font("helvetica", "bold", 12); tc(C.ink);
+    doc.text(T("Bloque #" + i + (i === 0 ? "  (génesis)" : "")), M + 4, yy + asc(12));
+    font("helvetica", "bold", 7.5);
+    const label = CHIP[kind][2].toUpperCase();
+    chip(kind, M + CW - 4 - (doc.getTextWidth(T(label)) + 4), yy + 0.2);
+    yy += lh(12) + 1;
+    const parts = ts.split(" ");
+    font("helvetica", "normal", 9); tc(C.soft);
+    doc.text(T("Creado el " + (parts[0] || ts) + (parts[1] ? " a las " + parts[1] : "")), M + 4, yy + asc(9));
+    yy += lh(9) + 2;
+    opLines.forEach(ls => { font("helvetica", "normal", 10); tc(C.ink); doc.text(ls, M + 4, yy + asc(10)); yy += ls.length * lh(10); });
+    yy += 2;
+    [["Hash anterior", prev], ["Hash del bloque", hash]].forEach(([lab, val]) => {
+      font("helvetica", "normal", 8); tc(C.soft); doc.text(T(lab.toUpperCase()), M + 4, yy + asc(8)); yy += lh(8);
+      font("courier", "normal", 8.5); tc(C.ink); doc.text(val, M + 4, yy + asc(8.5)); yy += lh(8.5) + 1;
+    });
+    y = top + bh;
+  }
+
+  /* Encabezado */
+  font("helvetica", "bold", 8); tc(C.accent);
+  doc.text(T("TALLER BLOCKCHAIN · SIMULACIÓN CON SHA-256"), M, y + asc(8));
+  y += lh(8) + 1;
+  font("helvetica", "bold", 20); tc(C.ink);
+  doc.text(T("Informe del estudiante"), M, y + asc(20));
+  y += lh(20) + 2;
+  dc(C.rule); doc.setLineWidth(0.3); doc.line(M, y, M + CW, y);
+  y += 5;
+  const nB = state.blocks.length;
+  kvRows([
+    ["Estudiante", studentName, false],
+    ["Fecha de emisión", issuedAt.replace(" ", " a las "), false],
+    ["Bloques creados", nB + " bloques con " + nB * 2 + " operaciones", false],
+    ["Modificaciones registradas", String(state.reports.length), false]
+  ], 52);
+  y += 2;
+  para("Este informe tiene tres partes: 1) los bloques tal como se crearon, correctamente encadenados; 2) las modificaciones registradas después, con sus efectos; y 3) el estado final de la cadena.", { size: 9.5, color: C.soft, gap: 1.5 });
+  para("Hash de cada bloque = SHA-256(número | fecha y hora | hash anterior | operación 1 | operación 2).", { size: 9.5, color: C.soft, gap: 3 });
+
+  /* Sección 1: bloques creados correctamente */
+  sectionTitle("1. Bloques creados correctamente");
+  para("Así quedó la cadena al terminar de crear los " + nB + " bloques, antes de cualquier modificación. Cada bloque guarda el hash del bloque anterior y todos los hashes coinciden, por eso los " + nB + " bloques son válidos.", { size: 9.5, color: C.soft, gap: 3 });
+  state.blocks.forEach((b, i) => {
+    drawBlockCard(i, b.ts, b.ops, b.prev, b.sealed, "ok");
+    if (i < nB - 1) {
+      const nb = state.blocks[i + 1];
+      const linked = nb.prev === b.sealed;
+      ensure(10);
+      dc(linked ? C.ok : C.bad); doc.setLineWidth(0.7); doc.line(M + 10, y, M + 10, y + 9);
+      font("helvetica", "bold", 8.5); tc(linked ? C.ok : C.bad);
+      doc.text(T((linked ? "Eslabón correcto: " : "Eslabón roto: ") + "el bloque #" + (i + 1) + " guarda el hash del bloque #" + i +
+        " (" + b.sealed.slice(0, 12) + "...)" + (linked ? " y coinciden." : ", pero no coincide.")), M + 14, y + 5.6);
+      y += 9;
+    }
+  });
+  y += 4;
+
+  /* Sección 2: modificaciones */
+  sectionTitle("2. Modificaciones realizadas");
+  para("Cada modificación se registró después de crear la cadena. Se presentan en el orden en que se hicieron.", { size: 9.5, color: C.soft, gap: 3 });
+  const reps = state.reports.slice().sort((a, z) => a.n - z.n);
+  reps.forEach((rep, idx) => {
+    ensure(40);
+    if (idx > 0) { dc(C.rule); doc.setLineWidth(0.3); doc.line(M, y, M + CW, y); y += 5; }
+    font("helvetica", "bold", 12.5); tc(C.ink);
+    doc.text(T("2." + (idx + 1) + "  Informe de modificación N.º " + rep.n), M, y + asc(12.5));
+    y += lh(12.5);
+    para("Registrado el " + rep.time.replace(" ", " a las ") + "  ·  Bloque modificado: #" + rep.block, { size: 9, color: C.soft, gap: 3 });
+
+    subTitle("a) Modificación registrada");
+    table([{ title: "Campo", w: 46 }, { title: "Valor anterior", w: 66, mono: true }, { title: "Valor nuevo", w: 66, mono: true }],
+      rep.changes.map(c => [c.where, c.from === "" ? "(vacío)" : c.from, c.to === "" ? "(vacío)" : c.to]));
+
+    subTitle("b) Efecto en el bloque #" + rep.block);
+    kvRows([
+      ["Hash antes del cambio", rep.hashBefore, true],
+      ["Hash después del cambio", rep.hashAfter, true],
+      ["Hash registrado al crearlo", rep.sealed, true]
+    ], 52);
+    para(blockStatusText(rep), { size: 10, gap: 3 });
+
+    subTitle("c) Efecto en la cadena");
+    table([{ title: "Bloque", w: 30 }, { title: "Antes", w: 25 }, { title: "Después", w: 25 }, { title: "Motivo", w: 98 }],
+      rep.rows.map(r => ["#" + r.k + (r.k === rep.block ? " (modificado)" : ""), { chip: r.before }, { chip: r.after }, r.reason]),
+      { highlight: ri => rep.rows[ri].k === rep.block });
+
+    subTitle("d) Conclusión");
+    box(rep.conclusion, rep.ok ? C.okBg : C.badBg);
+    y += 2;
+  });
+
+  /* Sección 3: estado final */
+  sectionTitle("3. Estado final de la cadena");
+  const out = outOfChain(ev);
+  if (ev.firstBad === -1) {
+    box("La cadena está ÍNTEGRA: todos los hashes coinciden con los registrados al crear cada bloque.", C.okBg, { style: "bold" });
+  } else {
+    box("La cadena quedó ROTA desde el bloque #" + ev.firstBad + ". " +
+      (out.length === 1 ? "El bloque " + joinNums(out) + " quedó" : "Los bloques " + joinNums(out) + " quedaron") + " fuera de la cadena válida.", C.badBg, { style: "bold" });
+  }
+  table([{ title: "Bloque", w: 24 }, { title: "Estado", w: 27 }, { title: "Detalle", w: 127 }],
+    state.blocks.map((b, k) => {
+      const ch = diffData(b, b.cur);
+      const nums = state.reports.filter(r => r.block === k).map(r => r.n).sort((a, z) => a - z);
+      const see = nums.length ? " Ver informe" + (nums.length > 1 ? "s" : "") + " N.º " + nums.join(", ") + "." : "";
+      let det;
+      if (ev.st[k] === "ok") det = "Sin alteraciones: su hash coincide con el registrado al crearlo y su eslabón está intacto." + see;
+      else if (ev.st[k] === "alt") det = "Datos modificados: " + ch.map(c => c.where + " (" + (c.from || "(vacío)") + " -> " + (c.to || "(vacío)") + ")").join("; ") + ". Su hash ya no coincide con el registrado." + see;
+      else det = (!ev.linkOK[k]
+        ? "Sin cambios propios, pero guarda el hash anterior del bloque #" + (k - 1) + ", que ya cambió."
+        : "Sin cambios propios, pero depende del bloque #" + (k - 1) + ", que ya no es válido.") + see;
+      return ["#" + k, { chip: ev.st[k] }, det];
+    }));
+
+  /* Pie de página */
+  const total = doc.getNumberOfPages();
+  for (let p = 1; p <= total; p++) {
+    doc.setPage(p);
+    dc(C.rule); doc.setLineWidth(0.2); doc.line(M, PH - 12, M + CW, PH - 12);
+    font("helvetica", "normal", 8); tc(C.soft);
+    doc.text(T("Taller Blockchain · " + studentName), M, PH - 8);
+    doc.text("Página " + p + " de " + total, M + CW, PH - 8, { align: "right" });
+  }
+  doc.setProperties({ title: "Informe Taller Blockchain - " + name, subject: "Cadena de bloques e informes de modificación", author: name, creator: "Taller Blockchain" });
+  return doc;
+}
+
+/* ---------- Ventana para crear el informe ---------- */
+const modal = document.getElementById("modal");
+const form = document.getElementById("report-form");
+const nameInput = document.getElementById("student-name");
+const formMsg = document.getElementById("form-msg");
+const modalOk = document.getElementById("modal-ok");
+const modalCancel = document.getElementById("modal-cancel");
+let busy = false;
+
+function setFormMsg(text, kind) {
+  formMsg.textContent = text;
+  formMsg.className = "form-msg" + (kind ? " " + kind : "");
+}
+function openModal() {
+  const n = state.reports.length;
+  document.getElementById("modal-desc").textContent = "El PDF incluirá tus " + state.blocks.length + " bloques tal como los creaste, " +
+    (n === 1 ? "tu modificación" : "tus " + n + " modificaciones") + " con sus efectos y el estado final de la cadena. Escribe tu nombre tal como debe aparecer en el documento.";
+  try { nameInput.value = localStorage.getItem(NAME_KEY) || nameInput.value; } catch (e) { /* sin almacenamiento */ }
+  setFormMsg("", "");
+  modalOk.disabled = false;
+  modalCancel.textContent = "Cancelar";
+  modal.hidden = false;
+  setTimeout(() => { nameInput.focus(); nameInput.select(); }, 0);
+}
+function closeModal() {
+  if (busy) return;
+  modal.hidden = true;
+  cmdReport.focus();
+}
+modalCancel.addEventListener("click", closeModal);
+modal.addEventListener("click", ev => { if (ev.target === modal) closeModal(); });
+document.addEventListener("keydown", ev => {
+  if (modal.hidden) return;
+  if (ev.key === "Escape") { ev.preventDefault(); closeModal(); return; }
+  if (ev.key === "Tab") {
+    const items = [nameInput, modalCancel, modalOk].filter(el => !el.disabled);
+    const idx = items.indexOf(document.activeElement);
+    if (ev.shiftKey && idx <= 0) { ev.preventDefault(); items[items.length - 1].focus(); }
+    else if (!ev.shiftKey && idx === items.length - 1) { ev.preventDefault(); items[0].focus(); }
+  }
+});
+
+form.addEventListener("submit", async ev => {
+  ev.preventDefault();
+  if (busy) return;
+  const name = nameInput.value.trim().replace(/\s+/g, " ");
+  if (name.length < 3) { setFormMsg("Escribe tu nombre completo (al menos 3 letras).", "err"); nameInput.focus(); return; }
+  if (!window.jspdf || !window.jspdf.jsPDF) {
+    setFormMsg("No se pudo cargar el generador de PDF. Revisa tu conexión a internet y recarga la página.", "err");
+    return;
+  }
+  try { localStorage.setItem(NAME_KEY, name); } catch (e) { /* sin almacenamiento */ }
+  busy = true;
+  modalOk.disabled = true;
+  setFormMsg("Generando el PDF…", "");
+  const filename = "Informe-Blockchain-" + slugName(name) + ".pdf";
+  try {
+    const doc = buildPDF(name, formatNow());
+    const host = window.claude && typeof window.claude.use === "function";
+    let how = "direct";
+    if (host) {
+      const downloads = await window.claude.use("downloads");
+      if (downloads) {
+        setFormMsg("Confirma la descarga en el aviso que aparece.", "");
+        await downloads.save({ filename, data: doc.output("blob") });
+        how = "saved";
+      } else {
+        doc.save(filename);
+        how = "fallback";
+      }
+    } else {
+      doc.save(filename);
+    }
+    setFormMsg(how === "fallback"
+      ? "Se generó " + filename + ". Si la descarga no empezó, abre el taller desde su enlace de GitHub Pages."
+      : "Listo: se generó " + filename + ".", "ok");
+    modalCancel.textContent = "Cerrar";
+  } catch (err) {
+    const code = err && err.code;
+    if (code === "declined") setFormMsg("Cancelaste la descarga. Puedes volver a intentarlo.", "err");
+    else if (code === "rate_limited") setFormMsg("Ya hay una descarga esperando confirmación. Respóndela e inténtalo de nuevo.", "err");
+    else setFormMsg("No se pudo descargar el PDF en esta vista. Ábrelo desde el enlace de GitHub Pages e inténtalo de nuevo.", "err");
+  } finally {
+    busy = false;
+    modalOk.disabled = false;
+  }
+});
+
+renderAll();
+</script>
+</body>
+</html>
