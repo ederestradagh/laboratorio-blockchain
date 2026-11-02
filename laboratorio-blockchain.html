@@ -1,0 +1,572 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Laboratorio Blockchain</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Schibsted+Grotesk:wght@400;500;600;700;800&display=swap">
+<style>
+/* Layout: cuaderno de bloques a la izquierda (probador + cadena), panel de estado fijo a la derecha; una sola columna en móvil */
+:root {
+  --paper: #EDF0F5;
+  --sheet: #FBFCFE;
+  --ink: #172031;
+  --ink-soft: #586377;
+  --rule: #D3D9E3;
+  --hash-bg: #EEF1F7;
+  --accent: #2747B8;
+  --accent-soft: #E2E7FA;
+  --on-accent: #FFFFFF;
+  --ok: #1B7448;
+  --ok-bg: #DEF1E6;
+  --warn: #8E5300;
+  --warn-bg: #FAEDD5;
+  --bad: #B42318;
+  --bad-bg: #FBE3E0;
+  --font-display: "Schibsted Grotesk", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Schibsted Grotesk", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #0F131B; --sheet: #161C27; --ink: #E6EAF1; --ink-soft: #9CA6B7; --rule: #2A3243; --hash-bg: #1D2432;
+    --accent: #93A9FF; --accent-soft: #212B4A; --on-accent: #0C1224;
+    --ok: #62C995; --ok-bg: #13301F; --warn: #EFB45E; --warn-bg: #33270F; --bad: #FF8E84; --bad-bg: #3B1815;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #0F131B; --sheet: #161C27; --ink: #E6EAF1; --ink-soft: #9CA6B7; --rule: #2A3243; --hash-bg: #1D2432;
+  --accent: #93A9FF; --accent-soft: #212B4A; --on-accent: #0C1224;
+  --ok: #62C995; --ok-bg: #13301F; --warn: #EFB45E; --warn-bg: #33270F; --bad: #FF8E84; --bad-bg: #3B1815;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { margin: 0; }
+img { max-width: 100%; }
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 32px 56px;
+}
+.wrap { max-width: 1120px; margin: 0 auto; display: grid; gap: 28px; }
+
+/* Encabezado */
+.intro { display: grid; gap: 10px; max-width: 70ch; }
+.eyebrow {
+  font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--accent); font-weight: 600;
+}
+h1 {
+  font-family: var(--font-display); font-weight: 800; font-size: clamp(2rem, 5vw, 3rem);
+  line-height: 1.05; letter-spacing: -0.02em; margin: 0; text-wrap: balance;
+}
+.intro p { margin: 0; color: var(--ink-soft); font-size: 1.05rem; }
+.formula {
+  font-family: var(--font-mono); font-size: 13px; color: var(--ink); background: var(--sheet);
+  border: 1px solid var(--rule); border-radius: 6px; padding: 8px 12px; justify-self: start; max-width: 100%;
+  overflow-x: auto; white-space: nowrap;
+}
+
+/* Rejilla principal */
+.layout { display: grid; gap: 28px; grid-template-columns: minmax(0, 1fr) 330px; align-items: start; }
+.main { display: grid; gap: 32px; min-width: 0; }
+.side { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 16px); min-width: 0; }
+@media (max-width: 900px) {
+  .layout { grid-template-columns: minmax(0, 1fr); }
+  .side { position: static; }
+}
+
+h2 {
+  font-family: var(--font-display); font-weight: 700; font-size: 1.35rem; margin: 0; letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+.section-head { display: grid; gap: 4px; margin-bottom: 14px; }
+.section-head p { margin: 0; color: var(--ink-soft); max-width: 65ch; }
+
+.label {
+  font-family: var(--font-mono); font-size: 11.5px; letter-spacing: 0.07em; text-transform: uppercase;
+  color: var(--ink-soft); font-weight: 500; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+}
+.hash {
+  display: block; font-family: var(--font-mono); font-size: 13px; line-height: 1.55; word-break: break-all;
+  background: var(--hash-bg); border-radius: 4px; padding: 7px 10px; color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Probador */
+.probe { background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; padding: 20px; display: grid; gap: 12px; }
+.probe input {
+  width: 100%; font: inherit; font-size: 1.05rem; color: var(--ink); background: var(--paper);
+  border: 1px solid var(--rule); border-radius: 6px; padding: 10px 12px;
+}
+.presets { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip {
+  font: inherit; font-size: 13.5px; color: var(--accent); background: var(--accent-soft); border: 1px solid transparent;
+  border-radius: 999px; padding: 4px 12px; cursor: pointer;
+}
+.chip:hover { border-color: var(--accent); }
+.probe-meta { margin: 0; font-size: 14px; color: var(--ink-soft); }
+.probe-meta strong { color: var(--ink); font-variant-numeric: tabular-nums; }
+.hash .d { background: var(--warn-bg); color: var(--warn); border-radius: 2px; }
+
+/* Cadena */
+.chain { display: grid; gap: 0; }
+.block {
+  background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; padding: 18px 20px;
+  display: grid; gap: 14px; transition: border-color .2s ease, box-shadow .2s ease;
+}
+.block[data-state="off"] { border-color: var(--bad); box-shadow: 0 0 0 1px var(--bad) inset; }
+.block[data-state="mod"] { border-color: var(--warn); }
+.block-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.block-id { display: flex; align-items: baseline; gap: 10px; }
+.block-id .num { font-family: var(--font-display); font-weight: 800; font-size: 1.6rem; letter-spacing: -0.02em; line-height: 1; }
+.block-id .kind { font-size: 14px; color: var(--ink-soft); }
+.pill {
+  font-family: var(--font-mono); font-size: 12px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase;
+  border-radius: 999px; padding: 3px 10px; white-space: nowrap;
+}
+.block[data-state="ok"] .pill { background: var(--ok-bg); color: var(--ok); }
+.block[data-state="mod"] .pill { background: var(--warn-bg); color: var(--warn); }
+.block[data-state="remade"] .pill { background: var(--accent-soft); color: var(--accent); }
+.block[data-state="off"] .pill { background: var(--bad-bg); color: var(--bad); }
+
+.field { display: grid; gap: 6px; min-width: 0; }
+.hash.prev.mismatch { background: var(--bad-bg); color: var(--bad); }
+.tag { font-size: 11px; border-radius: 3px; padding: 1px 6px; letter-spacing: 0.04em; }
+.tag.changed { background: var(--warn-bg); color: var(--warn); }
+.tag.mismatch { background: var(--bad-bg); color: var(--bad); }
+textarea {
+  width: 100%; font: inherit; font-size: 15px; line-height: 1.5; color: var(--ink); background: var(--paper);
+  border: 1px solid var(--rule); border-radius: 6px; padding: 8px 10px; resize: vertical; min-height: 2.6em;
+}
+.block[data-state="mod"] textarea { border-color: var(--warn); }
+
+details { font-size: 14px; color: var(--ink-soft); }
+summary { cursor: pointer; width: fit-content; }
+details .hash { margin-top: 8px; font-size: 12px; white-space: pre-wrap; }
+
+.repair {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px;
+  background: var(--bad-bg); color: var(--bad); border-radius: 6px; padding: 10px 12px; font-size: 14px;
+}
+.repair p { margin: 0; flex: 1 1 220px; }
+.btn {
+  font: inherit; font-weight: 600; font-size: 14.5px; border-radius: 6px; padding: 8px 14px; cursor: pointer;
+  background: var(--accent); color: var(--on-accent); border: 1px solid var(--accent); white-space: nowrap;
+}
+.btn:hover { filter: brightness(1.08); }
+.btn.ghost { background: transparent; color: var(--accent); }
+
+/* Eslabón entre bloques */
+.link { display: grid; grid-template-columns: 40px minmax(0, 1fr); align-items: center; gap: 10px; padding: 6px 0 6px 20px; position: relative; }
+.link::before { content: ""; position: absolute; left: 39px; top: 0; bottom: 0; width: 2px; background: var(--ok); }
+.link.broken::before { background: repeating-linear-gradient(var(--bad) 0 5px, transparent 5px 10px); }
+.link .knot {
+  position: relative; z-index: 1; width: 40px; height: 28px; border-radius: 14px; display: grid; place-items: center;
+  background: var(--ok-bg); color: var(--ok); border: 2px solid var(--ok); font-weight: 700; font-size: 14px;
+}
+.link.broken .knot { background: var(--bad-bg); color: var(--bad); border-color: var(--bad); }
+.link p { margin: 0; font-size: 14px; color: var(--ink-soft); padding-block: 8px; }
+.link p code { font-family: var(--font-mono); font-size: 12.5px; color: var(--ink); }
+.link.broken p { color: var(--bad); }
+.link.broken p code { color: var(--bad); }
+
+/* Panel lateral */
+.panel { background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; padding: 20px; display: grid; gap: 16px; }
+.status-word { font-family: var(--font-display); font-weight: 800; font-size: 1.7rem; line-height: 1.1; letter-spacing: -0.02em; margin: 0; text-wrap: balance; }
+.panel[data-state="ok"] .status-word { color: var(--ok); }
+.panel[data-state="bad"] .status-word { color: var(--bad); }
+.panel[data-state="diff"] .status-word { color: var(--warn); }
+.status-text { margin: 0; font-size: 15px; }
+.compare { display: grid; gap: 8px; border-top: 1px solid var(--rule); padding-top: 14px; }
+.compare .row { display: grid; gap: 4px; }
+.compare .hash { font-size: 12px; }
+.verdict { font-size: 14px; font-weight: 600; margin: 0; }
+.verdict.ok { color: var(--ok); }
+.verdict.bad { color: var(--bad); }
+.counter { display: flex; justify-content: space-between; align-items: baseline; border-top: 1px solid var(--rule); padding-top: 14px; }
+.counter b { font-family: var(--font-display); font-size: 1.6rem; font-variant-numeric: tabular-nums; }
+.tries { margin: 0; padding-left: 1.2em; font-size: 14px; color: var(--ink-soft); display: grid; gap: 4px; }
+.tries strong { color: var(--ink); font-weight: 600; }
+
+/* Conclusiones */
+.lessons { background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; padding: 20px; display: grid; gap: 12px; }
+.lessons ol { margin: 0; padding-left: 1.3em; display: grid; gap: 8px; max-width: 65ch; }
+.next { margin: 0; padding: 12px 14px; background: var(--accent-soft); border-radius: 6px; max-width: 70ch; font-size: 15px; }
+
+button:focus-visible, input:focus-visible, textarea:focus-visible, summary:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: 2px;
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="intro">
+    <span class="eyebrow">Bitcoin · Satoshi Nakamoto, 2008</span>
+    <h1>Laboratorio Blockchain</h1>
+    <p>Una cadena de cuatro bloques unidos por hashes SHA-256, el mismo algoritmo que usa Bitcoin. Cambia cualquier dato y observa cómo la cadena delata la alteración.</p>
+    <code class="formula">hash del bloque = SHA-256( número | hash anterior | datos )</code>
+  </header>
+
+  <div class="layout">
+    <div class="main">
+      <section class="probe" aria-labelledby="probe-title">
+        <div class="section-head" style="margin:0">
+          <h2 id="probe-title">Probador de hash</h2>
+          <p>Escribe cualquier texto. Con cada tecla cambia casi toda la huella.</p>
+        </div>
+        <label class="label" for="probe-input">Texto de entrada</label>
+        <input id="probe-input" type="text" value="Juan paga 10 a Maria" autocomplete="off" spellcheck="false">
+        <div class="presets" role="group" aria-label="Ejemplos">
+          <button class="chip" type="button" data-preset="Juan paga 10 a Maria">Juan paga 10 a Maria</button>
+          <button class="chip" type="button" data-preset="Juan paga 11 a Maria">Juan paga 11 a Maria</button>
+          <button class="chip" type="button" data-preset="juan paga 10 a Maria">juan paga 10 a Maria</button>
+        </div>
+        <div class="field">
+          <span class="label">SHA-256</span>
+          <code class="hash" id="probe-hash"></code>
+        </div>
+        <p class="probe-meta" id="probe-meta"></p>
+      </section>
+
+      <section aria-labelledby="chain-title">
+        <div class="section-head">
+          <h2 id="chain-title">La cadena</h2>
+          <p>Cada bloque guarda el hash del bloque anterior. Edita las transacciones de cualquier bloque. Como en Bitcoin, la numeración empieza en el #0, el bloque génesis.</p>
+        </div>
+        <div class="chain" id="chain"></div>
+      </section>
+
+      <section class="lessons" aria-labelledby="lessons-title">
+        <h2 id="lessons-title">Lo que muestra el laboratorio</h2>
+        <ol>
+          <li>Cambiar un solo dato cambia por completo el hash del bloque.</li>
+          <li>El bloque siguiente guarda ese hash, así que detecta el cambio de inmediato.</li>
+          <li>Para ocultar la alteración hay que rehacer todos los bloques siguientes. Aun así, el hash final de tu copia no coincide con el de los demás nodos de la red.</li>
+        </ol>
+        <p class="next"><strong>Próximo tema: prueba de trabajo.</strong> Aquí rehacer un bloque toma un clic. En Bitcoin, cada bloque exige un cálculo muy costoso y la red produce uno cada 10 minutos en promedio, así que rehacer varios bloques más rápido que el resto de la red resulta prácticamente imposible.</p>
+      </section>
+    </div>
+
+    <aside class="side" aria-labelledby="status-title">
+      <div class="panel" id="panel" data-state="ok" aria-live="polite">
+        <span class="label" id="status-title">Estado de la cadena</span>
+        <p class="status-word" id="status-word"></p>
+        <p class="status-text" id="status-text"></p>
+        <div class="compare">
+          <div class="row">
+            <span class="label">Hash final de tu copia</span>
+            <code class="hash" id="tip-mine"></code>
+          </div>
+          <div class="row">
+            <span class="label">Hash final en los demás nodos</span>
+            <code class="hash" id="tip-net"></code>
+          </div>
+          <p class="verdict" id="verdict"></p>
+        </div>
+        <div class="counter">
+          <span class="label">Bloques rehechos</span>
+          <b id="remade-count">0</b>
+        </div>
+        <ol class="tries">
+          <li>En el bloque <strong>#1</strong>, cambia <strong>10</strong> por <strong>100</strong>.</li>
+          <li>Mira qué pasa con el eslabón hacia el bloque #2.</li>
+          <li>Pulsa <strong>Rehacer bloque</strong> hasta que la cadena vuelva a cuadrar.</li>
+          <li>Compara el hash final con el de los demás nodos.</li>
+        </ol>
+        <button class="btn ghost" type="button" id="reset">Restaurar cadena original</button>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<script>
+const K = new Uint32Array([
+  0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,
+  0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,
+  0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,
+  0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,
+  0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,
+  0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,
+  0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,
+  0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2
+]);
+const encoder = new TextEncoder();
+function sha256(str) {
+  const msg = encoder.encode(str);
+  const len = msg.length;
+  const total = Math.ceil((len + 9) / 64) * 64;
+  const buf = new Uint8Array(total);
+  buf.set(msg);
+  buf[len] = 0x80;
+  const dv = new DataView(buf.buffer);
+  const bits = len * 8;
+  dv.setUint32(total - 8, Math.floor(bits / 0x100000000));
+  dv.setUint32(total - 4, bits >>> 0);
+  const H = [0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19];
+  const w = new Uint32Array(64);
+  for (let off = 0; off < total; off += 64) {
+    for (let i = 0; i < 16; i++) w[i] = dv.getUint32(off + i * 4);
+    for (let i = 16; i < 64; i++) {
+      const x = w[i - 15], y = w[i - 2];
+      const s0 = ((x >>> 7) | (x << 25)) ^ ((x >>> 18) | (x << 14)) ^ (x >>> 3);
+      const s1 = ((y >>> 17) | (y << 15)) ^ ((y >>> 19) | (y << 13)) ^ (y >>> 10);
+      w[i] = (w[i - 16] + s0 + w[i - 7] + s1) >>> 0;
+    }
+    let [a, b, c, d, e, f, g, h] = H;
+    for (let i = 0; i < 64; i++) {
+      const S1 = ((e >>> 6) | (e << 26)) ^ ((e >>> 11) | (e << 21)) ^ ((e >>> 25) | (e << 7));
+      const ch = (e & f) ^ (~e & g);
+      const t1 = (h + S1 + ch + K[i] + w[i]) >>> 0;
+      const S0 = ((a >>> 2) | (a << 30)) ^ ((a >>> 13) | (a << 19)) ^ ((a >>> 22) | (a << 10));
+      const maj = (a & b) ^ (a & c) ^ (b & c);
+      const t2 = (S0 + maj) >>> 0;
+      h = g; g = f; f = e; e = (d + t1) >>> 0; d = c; c = b; b = a; a = (t1 + t2) >>> 0;
+    }
+    H[0] = (H[0] + a) >>> 0; H[1] = (H[1] + b) >>> 0; H[2] = (H[2] + c) >>> 0; H[3] = (H[3] + d) >>> 0;
+    H[4] = (H[4] + e) >>> 0; H[5] = (H[5] + f) >>> 0; H[6] = (H[6] + g) >>> 0; H[7] = (H[7] + h) >>> 0;
+  }
+  return H.map(v => v.toString(16).padStart(8, "0")).join("");
+}
+
+/* ---------- Probador de hash ---------- */
+const probeInput = document.getElementById("probe-input");
+const probeHash = document.getElementById("probe-hash");
+const probeMeta = document.getElementById("probe-meta");
+let lastProbe = null;
+
+function updateProbe() {
+  const h = sha256(probeInput.value);
+  probeHash.textContent = "";
+  let diff = 0;
+  for (let i = 0; i < h.length; i++) {
+    if (lastProbe && lastProbe !== h && lastProbe[i] !== h[i]) {
+      const s = document.createElement("span");
+      s.className = "d";
+      s.textContent = h[i];
+      probeHash.appendChild(s);
+      diff++;
+    } else {
+      probeHash.appendChild(document.createTextNode(h[i]));
+    }
+  }
+  if (lastProbe && lastProbe !== h) {
+    probeMeta.innerHTML = "Siempre 64 caracteres. Con tu último cambio variaron <strong>" + diff + " de 64</strong> (resaltados).";
+  } else if (!lastProbe) {
+    probeMeta.textContent = "Siempre 64 caracteres hexadecimales (0–9 y a–f), sin importar el largo del texto.";
+  }
+  lastProbe = h;
+}
+probeInput.addEventListener("input", updateProbe);
+document.querySelectorAll("[data-preset]").forEach(btn => {
+  btn.addEventListener("click", () => { probeInput.value = btn.dataset.preset; updateProbe(); });
+});
+updateProbe();
+
+/* ---------- Cadena ---------- */
+const ZERO = "0".repeat(64);
+const SEED = [
+  { kind: "Génesis", data: "Se crean 50 BTC para Ana" },
+  { kind: "", data: "Ana paga 10 BTC a Juan\nAna paga 5 BTC a María" },
+  { kind: "", data: "Juan paga 3 BTC a Luis" },
+  { kind: "", data: "María paga 2 BTC a Juan\nLuis paga 1 BTC a Ana" }
+];
+const PILL = { ok: "Válido", mod: "Modificado", remade: "Rehecho", off: "Desconectado" };
+
+const inputOf = (i, b) => i + "|" + b.prev + "|" + b.data;
+const hashOf = (i, b) => sha256(inputOf(i, b));
+const short = h => h.slice(0, 8) + "…";
+
+const original = [];
+(function buildOriginal() {
+  let prev = ZERO;
+  SEED.forEach((s, i) => {
+    const b = { prev, data: s.data };
+    const hash = hashOf(i, b);
+    original.push({ prev, data: s.data, hash });
+    prev = hash;
+  });
+})();
+
+let chain = [];
+let remade = 0;
+const chainEl = document.getElementById("chain");
+const els = [];
+
+function el(tag, cls, text) {
+  const n = document.createElement(tag);
+  if (cls) n.className = cls;
+  if (text != null) n.textContent = text;
+  return n;
+}
+
+SEED.forEach((s, i) => {
+  if (i > 0) {
+    const link = el("div", "link");
+    const knot = el("span", "knot");
+    knot.setAttribute("aria-hidden", "true");
+    const p = el("p");
+    link.append(knot, p);
+    chainEl.appendChild(link);
+    els[i - 1].link = { link, knot, p };
+  }
+  const art = el("article", "block");
+  art.id = "block-" + i;
+  const head = el("header", "block-head");
+  const idBox = el("div", "block-id");
+  idBox.append(el("span", "num", "Bloque #" + i));
+  if (s.kind) idBox.append(el("span", "kind", s.kind));
+  const pill = el("span", "pill");
+  head.append(idBox, pill);
+
+  const fPrev = el("div", "field");
+  const lPrev = el("span", "label", "Hash anterior");
+  const tagMis = el("span", "tag mismatch", "no coincide");
+  tagMis.hidden = true;
+  lPrev.appendChild(tagMis);
+  const cPrev = el("code", "hash prev");
+  fPrev.append(lPrev, cPrev);
+
+  const fData = el("div", "field");
+  const lData = el("label", "label", "Datos (transacciones)");
+  lData.htmlFor = "data-" + i;
+  const ta = el("textarea");
+  ta.id = "data-" + i;
+  ta.spellcheck = false;
+  fData.append(lData, ta);
+
+  const fHash = el("div", "field");
+  const lHash = el("span", "label", "Hash de este bloque");
+  const tagChg = el("span", "tag changed", "cambió");
+  tagChg.hidden = true;
+  lHash.appendChild(tagChg);
+  const cHash = el("code", "hash own");
+  fHash.append(lHash, cHash);
+
+  const det = el("details");
+  const sum = el("summary", null, "Ver qué entra al hash");
+  const cInput = el("code", "hash");
+  det.append(sum, cInput);
+
+  const repair = el("div", "repair");
+  repair.hidden = true;
+  const rp = el("p", null, "El hash anterior que guarda este bloque ya no coincide con el bloque #" + (i - 1) + ".");
+  const rb = el("button", "btn", "Rehacer bloque #" + i);
+  rb.type = "button";
+  rb.addEventListener("click", () => {
+    chain[i].prev = hashOf(i - 1, chain[i - 1]);
+    remade++;
+    update();
+  });
+  repair.append(rp, rb);
+
+  art.append(head, fPrev, fData, fHash, det, repair);
+  chainEl.appendChild(art);
+
+  ta.addEventListener("input", () => {
+    chain[i].data = ta.value;
+    fitRows(ta);
+    update();
+  });
+
+  els[i] = { art, pill, cPrev, tagMis, ta, cHash, tagChg, cInput, repair };
+});
+
+function fitRows(ta) {
+  ta.rows = Math.max(2, ta.value.split("\n").length);
+}
+
+function reset() {
+  chain = original.map(b => ({ prev: b.prev, data: b.data }));
+  remade = 0;
+  els.forEach((e, i) => { e.ta.value = chain[i].data; fitRows(e.ta); });
+  update();
+}
+document.getElementById("reset").addEventListener("click", reset);
+
+const plural = (n, one, many) => n + " " + (n === 1 ? one : many);
+
+function update() {
+  const hashes = chain.map((b, i) => hashOf(i, b));
+  const linkOK = chain.map((b, i) => (i === 0 ? b.prev === ZERO : b.prev === hashes[i - 1]));
+  const brokenAt = linkOK.indexOf(false);
+
+  chain.forEach((b, i) => {
+    const e = els[i];
+    let state;
+    if (brokenAt !== -1 && i >= brokenAt) state = "off";
+    else if (b.data !== original[i].data) state = "mod";
+    else if (b.prev !== original[i].prev) state = "remade";
+    else state = "ok";
+    e.art.dataset.state = state;
+    e.pill.textContent = PILL[state];
+
+    e.cPrev.textContent = b.prev;
+    e.cPrev.classList.toggle("mismatch", !linkOK[i]);
+    e.tagMis.hidden = linkOK[i];
+    e.cHash.textContent = hashes[i];
+    e.tagChg.hidden = hashes[i] === original[i].hash;
+    e.cInput.textContent = "SHA-256(\n  " + i + "\n| " + b.prev + "\n| " + b.data.replace(/\n/g, "\n  ") + "\n)";
+    e.repair.hidden = linkOK[i] || i === 0;
+
+    if (i > 0) {
+      const L = els[i - 1].link;
+      L.link.classList.toggle("broken", !linkOK[i]);
+      L.knot.textContent = linkOK[i] ? "✓" : "✕";
+      if (linkOK[i]) {
+        L.p.innerHTML = "El bloque #" + i + " guarda el hash del #" + (i - 1) + ": <code>" + short(b.prev) + "</code> = <code>" + short(hashes[i - 1]) + "</code>";
+      } else {
+        L.p.innerHTML = "Eslabón roto. El #" + i + " guarda <code>" + short(b.prev) + "</code>, pero el hash actual del #" + (i - 1) + " es <code>" + short(hashes[i - 1]) + "</code>";
+      }
+    }
+  });
+
+  const tip = hashes[hashes.length - 1];
+  const netTip = original[original.length - 1].hash;
+  const panel = document.getElementById("panel");
+  const word = document.getElementById("status-word");
+  const text = document.getElementById("status-text");
+
+  if (brokenAt !== -1) {
+    panel.dataset.state = "bad";
+    word.textContent = "Rota desde el bloque #" + brokenAt;
+    text.textContent = "El bloque #" + (brokenAt - 1) + " cambió y su hash ya no es el que guarda el bloque #" + brokenAt +
+      ". Para ocultarlo tendrías que rehacer el bloque #" + brokenAt + (brokenAt < chain.length - 1 ? " y todos los que siguen." : ".");
+  } else if (tip === netTip) {
+    panel.dataset.state = "ok";
+    word.textContent = "Íntegra";
+    text.textContent = "Todos los bloques están encadenados y tu copia coincide con la de los demás nodos.";
+  } else if (remade === 0) {
+    panel.dataset.state = "diff";
+    word.textContent = "Distinta a la red";
+    text.textContent = "Cambiaste el último bloque. No hay un bloque siguiente que lo delate todavía, pero su hash ya no coincide con el de los demás nodos.";
+  } else {
+    panel.dataset.state = "diff";
+    word.textContent = "Reparada, pero distinta";
+    text.textContent = "Rehiciste " + plural(remade, "bloque", "bloques") + " y la cadena vuelve a cuadrar. Sin embargo, tu hash final no coincide con el de los demás nodos, así que la red se queda con la versión original.";
+  }
+
+  document.getElementById("tip-mine").textContent = tip;
+  document.getElementById("tip-net").textContent = netTip;
+  const verdict = document.getElementById("verdict");
+  const same = tip === netTip;
+  verdict.className = "verdict " + (same ? "ok" : "bad");
+  verdict.textContent = same ? "✓ Coinciden: la red acepta tu copia." : "✕ No coinciden: tu copia queda en minoría.";
+  document.getElementById("remade-count").textContent = remade;
+}
+
+reset();
+</script>
+</body>
+</html>
